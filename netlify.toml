@@ -1,0 +1,38 @@
+# Netlify configuration — Novarea Canteen (static site)
+[build]
+  publish = "."
+
+# The service worker and entry pages must not be cached long, so updates land immediately.
+[[headers]]
+  for = "/service-worker.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/manifest.json"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+# Never allow shared/proxy caches to store app JS that may hold employee data in memory.
+[[headers]]
+  for = "/assets/core.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "no-referrer"
+
+# Icons and logo can be cached for a while.
+[[headers]]
+  for = "/assets/logo-novarea.png"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"

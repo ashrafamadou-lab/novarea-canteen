@@ -1,0 +1,19 @@
+{
+  "name": "Novarea Canteen Access",
+  "short_name": "Canteen Access",
+  "description": "Canteen access control for Novarea Textiles Benin — QR badge scanning, meal eligibility, and provider billing reports.",
+  "id": "/novarea-canteen/",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#eef2ee",
+  "theme_color": "#1f6b2b",
+  "lang": "en",
+  "categories": ["business", "productivity", "food"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

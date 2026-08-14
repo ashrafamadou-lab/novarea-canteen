@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Novarea Canteen Access</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1f6b2b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Canteen Access">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script src="assets/supabase-config.js"></script>
+<script src="assets/core.js"></script>
+<script src="assets/tests.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js" defer></script>
+<style>
+:root{
+  --green:#2f8f3e; --green-dark:#1f6b2b; --green-light:#8bc53f; --green-bg:#eaf5ec;
+  --ink:#1c2a20; --ink-2:#3a4a3f; --muted:#6b7a70;
+  --danger:#c0392b; --danger-bg:#fde8e6; --warn:#b7791f; --warn-bg:#fff4e0;
+  --ok:#1f8f4e; --ok-bg:#e7f6ec;
+  --glass:rgba(255,255,255,.62); --glass-strong:rgba(255,255,255,.86);
+  --border:rgba(255,255,255,.65); --border-2:rgba(31,107,43,.14);
+  --shadow:0 8px 30px rgba(31,74,42,.12); --shadow-sm:0 3px 12px rgba(31,74,42,.10);
+  --radius:18px; --radius-sm:12px;
+}
+/* ---------- Dark theme (readability first) ---------- */
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --green:#2f9e44; --green-dark:#8ede98; --green-light:#8bc53f; --green-bg:#16281c;
+  --ink:#e9f2ec; --ink-2:#c6d6cb; --muted:#93a99b;
+  --danger:#ff8175; --danger-bg:#3a1d19; --warn:#f2b134; --warn-bg:#332810;
+  --ok:#63d68f; --ok-bg:#123021;
+  --glass:rgba(26,40,31,.82); --glass-strong:rgba(20,32,25,.93);
+  --border:rgba(255,255,255,.14); --border-2:rgba(255,255,255,.11);
+  --shadow:0 8px 30px rgba(0,0,0,.5); --shadow-sm:0 3px 12px rgba(0,0,0,.42);
+}
+:root[data-theme="dark"] body{background:linear-gradient(135deg,#0f1a13 0%,#0c1710 45%,#0a140e 100%);background-color:#0c150f;}
+:root[data-theme="dark"] body::before{opacity:.26;}
+:root[data-theme="dark"] body::after{opacity:.2;}
+:root[data-theme="dark"] .mtopbar{background:rgba(16,26,20,.78);}
+:root[data-theme="dark"] .sidebar{background:rgba(14,24,18,.82);}
+:root[data-theme="dark"] th{background:rgba(20,32,25,.94);}
+:root[data-theme="dark"] input,:root[data-theme="dark"] select,:root[data-theme="dark"] textarea{background:rgba(255,255,255,.07);color:var(--ink);}
+:root[data-theme="dark"] input::placeholder,:root[data-theme="dark"] textarea::placeholder{color:var(--muted);}
+:root[data-theme="dark"] button.secondary{background:rgba(255,255,255,.09);color:var(--ink);}
+:root[data-theme="dark"] .pill,:root[data-theme="dark"] .userchip,:root[data-theme="dark"] .lang-toggle{background:rgba(255,255,255,.07);}
+:root[data-theme="dark"] .lang-btn{color:var(--ink-2);}
+:root[data-theme="dark"] .badge.neutral{background:rgba(255,255,255,.12);color:var(--ink-2);}
+:root[data-theme="dark"] #s-dashboard .date-zone input{background:rgba(255,255,255,.07);}
+:root[data-theme="dark"] .scan-result.idle{background:rgba(255,255,255,.07);color:var(--muted);}
+:root[data-theme="dark"] .toast{background:#08130d;color:var(--ink);border:1px solid var(--border);}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  color:var(--ink); min-height:100vh; position:relative; overflow-x:hidden;
+  background:linear-gradient(135deg,#eef4ee 0%,#e6f0ea 45%,#e3eee7 100%); background-color:#eaf2ec;
+}
+body::before,body::after{content:"";position:fixed;z-index:-2;border-radius:50%;filter:blur(70px);opacity:.5;}
+body::before{width:520px;height:520px;top:-140px;right:-120px;background:radial-gradient(circle,#8bc53f,#2f8f3e 70%);}
+body::after{width:460px;height:460px;bottom:-160px;left:-140px;background:radial-gradient(circle,#2f8f3e,#1f6b2b 70%);opacity:.35;}
+.glass{background:var(--glass);backdrop-filter:blur(18px) saturate(160%);-webkit-backdrop-filter:blur(18px) saturate(160%);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);}
+.card{background:var(--glass);backdrop-filter:blur(16px) saturate(155%);-webkit-backdrop-filter:blur(16px) saturate(155%);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:18px;margin-bottom:16px;}
+.card.solid{background:var(--glass-strong);}
+h1,h2,h3,h4{margin:0 0 .5em;color:var(--green-dark);line-height:1.2;}
+h1{font-size:1.5rem;font-weight:800;}
+h2{font-size:1.25rem;font-weight:700;}
+h3{font-size:1.02rem;font-weight:700;}
+h4{font-size:.95rem;font-weight:700;}
+a{color:var(--green-dark);}
+.muted{color:var(--muted);} .small{font-size:.85rem;}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
+.grow{flex:1;}
+button,.btn{font:inherit;cursor:pointer;border:none;border-radius:12px;padding:10px 16px;background:var(--green);color:#fff;font-weight:600;box-shadow:var(--shadow-sm);transition:transform .06s ease,filter .15s;}
+button:hover,.btn:hover{filter:brightness(1.05);} button:active{transform:translateY(1px);}
+button.secondary{background:rgba(255,255,255,.75);color:var(--ink);border:1px solid var(--border-2);}
+button.ghost{background:transparent;color:var(--green-dark);box-shadow:none;}
+button.danger{background:var(--danger);}
+button.small{padding:6px 10px;font-size:.85rem;}
+button:disabled{opacity:.5;cursor:not-allowed;}
+input,select,textarea{font:inherit;padding:10px 12px;border-radius:12px;border:1px solid var(--border-2);background:rgba(255,255,255,.8);color:var(--ink);width:100%;}
+label{display:block;font-size:.82rem;color:var(--ink-2);font-weight:600;margin:8px 0 4px;}
+table{width:100%;border-collapse:collapse;font-size:.9rem;}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--border-2);}
+th{color:var(--ink-2);font-size:.78rem;text-transform:uppercase;letter-spacing:.03em;position:sticky;top:0;background:rgba(255,255,255,.9);backdrop-filter:blur(6px);}
+.tablewrap{overflow-x:auto;max-height:65vh;overflow-y:auto;border-radius:12px;}
+.badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.75rem;font-weight:700;}
+.badge.ok{background:var(--ok-bg);color:var(--ok);}
+.badge.no{background:var(--danger-bg);color:var(--danger);}
+.badge.warn{background:var(--warn-bg);color:var(--warn);}
+.badge.neutral{background:rgba(0,0,0,.06);color:var(--ink-2);}
+.pill{display:inline-flex;gap:6px;align-items:center;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.7);border:1px solid var(--border-2);font-size:.8rem;}
+.kpi{display:flex;flex-direction:column;gap:2px;min-width:150px;}
+.kpi .v{font-size:1.3rem;font-weight:800;color:var(--green-dark);line-height:1.1;word-break:break-word;}
+.kpi .l{font-size:.76rem;color:var(--muted);}
+.kgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;}
+/* Dashboard: more compact zones */
+#s-dashboard .card{padding:14px;margin-bottom:12px;}
+#s-dashboard .kgrid{grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:10px 14px;}
+#s-dashboard .kpi .v{font-size:1.15rem;}
+#s-dashboard .kpi .l{font-size:.72rem;}
+#s-dashboard h2{margin-bottom:0;}
+#s-dashboard h3{font-size:.95rem;margin-bottom:8px;}
+#s-dashboard .dash-charts{align-items:flex-start;}
+#s-dashboard .dash-charts .card{margin-bottom:0;}
+#s-dashboard .date-zone{display:inline-flex;align-items:center;gap:8px;background:var(--glass-strong);border:1px solid var(--border-2);border-radius:12px;padding:4px 6px 4px 12px;box-shadow:var(--shadow-sm);margin-top:-4px;}
+#s-dashboard .flex-between + .card{margin-top:18px;}
+#s-dashboard .date-zone label{margin:0;font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+#s-dashboard .date-zone input{width:auto;padding:6px 8px;font-size:.88rem;border:1px solid var(--border-2);border-radius:8px;background:#fff;}
+.bar{height:10px;border-radius:6px;background:linear-gradient(90deg,var(--green-light),var(--green));}
+/* ---------- App shell ---------- */
+#app{display:none;min-height:100vh;}
+#app.on{display:flex;}
+.sidebar{width:240px;flex-shrink:0;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:6px;padding:16px 12px;background:rgba(255,255,255,.55);backdrop-filter:blur(20px) saturate(170%);border-right:1px solid var(--border);}
+.brand{display:flex;flex-direction:column;align-items:flex-start;gap:5px;padding:4px 8px 14px;}
+.brand img{height:30px;width:auto;max-width:100%;}
+.brand-sub{color:var(--green-dark);font-size:.7rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;opacity:.82;}
+.nav{display:flex;flex-direction:column;gap:2px;overflow-y:auto;flex:1;}
+.nav a{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;color:var(--ink-2);text-decoration:none;font-weight:600;font-size:.92rem;cursor:pointer;}
+.nav a:hover{background:rgba(47,143,62,.08);}
+.nav a.active{background:var(--green);color:#fff;box-shadow:var(--shadow-sm);}
+.nav a .ic{width:20px;text-align:center;}
+.sb-foot{border-top:1px solid var(--border-2);padding-top:10px;display:flex;flex-direction:column;gap:8px;}
+.userchip{display:flex;align-items:center;gap:8px;font-size:.85rem;padding:6px 8px;border-radius:12px;background:rgba(255,255,255,.6);}
+.userchip .av{width:30px;height:30px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;}
+.main-col{flex:1;min-width:0;display:flex;flex-direction:column;}
+.mtopbar{display:none;align-items:center;gap:10px;padding:10px 14px;background:rgba(255,255,255,.6);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:40;}
+.content{padding:20px;max-width:1200px;width:100%;margin:0 auto;}
+.section{display:none;} .section.on{display:block;animation:fade .2s;}
+@keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;}}
+.sb-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:35;}
+@media(max-width:900px){
+  .sidebar{position:fixed;left:0;top:0;z-index:50;transform:translateX(-100%);transition:transform .25s;}
+  body.nav-open .sidebar{transform:none;}
+  body.nav-open .sb-backdrop{display:block;}
+  .mtopbar{display:flex;}
+}
+/* ---------- Login ---------- */
+#login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+#login .box{width:min(400px,100%);padding:28px;}
+#login .brand{align-items:center;text-align:center;gap:10px;padding-bottom:4px;}
+#login .brand img{height:64px;}
+#login .brand-sub{font-size:.82rem;letter-spacing:.18em;}
+/* ---------- Modal ---------- */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(20,35,25,.45);backdrop-filter:blur(3px);z-index:100;align-items:center;justify-content:center;padding:16px;}
+.modal-bg.on{display:flex;}
+.modal{width:min(720px,100%);max-height:88vh;overflow:auto;padding:22px;}
+.modal.wide{width:min(960px,100%);}
+/* ---------- Scanner ---------- */
+#scan-reader{width:100%;max-width:460px;margin:0 auto;border-radius:16px;overflow:hidden;background:#0c130e;aspect-ratio:1/1;}
+.scan-result{border-radius:18px;padding:22px;text-align:center;color:#fff;margin-top:14px;transition:.15s;min-height:120px;display:flex;flex-direction:column;justify-content:center;}
+.scan-result .big{font-size:1.5rem;font-weight:800;letter-spacing:.02em;}
+.scan-result .nm{font-size:1.15rem;font-weight:700;margin-top:6px;}
+.scan-result.ok{background:linear-gradient(135deg,#1f8f4e,#146b39);}
+.scan-result.no{background:linear-gradient(135deg,#c0392b,#8e2018);}
+.scan-result.warn{background:linear-gradient(135deg,#c9821a,#9a6212);}
+.scan-result.idle{background:rgba(255,255,255,.6);color:var(--muted);}
+.conn-dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
+.conn-online{background:#22a35a;} .conn-offline{background:#c0392b;} .conn-local{background:#b7791f;}
+/* ---------- Badge print ---------- */
+.badge-card{width:320px;border:1px solid #cfe0d3;border-radius:14px;padding:14px;background:#fff;color:#123;display:flex;gap:12px;align-items:center;}
+.badge-card .qr{flex-shrink:0;}
+.badge-card h4{margin:0 0 2px;color:var(--green-dark);}
+.badge-card .cap{margin-top:6px;font-size:.7rem;font-weight:800;color:#fff;background:var(--green);padding:2px 8px;border-radius:6px;display:inline-block;}
+/* off-screen holder for printable badges (moved on-page only in @media print) */
+#print-area{position:fixed;left:-9999px;top:0;}
+@media print{
+  body *{visibility:hidden;} #print-area,#print-area *{visibility:visible;}
+  #print-area{position:absolute!important;left:0!important;top:0!important;width:100%;}
+  #print-area .badge-card{page-break-inside:avoid;margin:8px;display:flex!important;}
+  body::before,body::after{display:none;}
+}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:12px;box-shadow:var(--shadow);z-index:200;opacity:0;transition:.2s;font-size:.9rem;}
+.toast.on{opacity:1;}
+.hidden{display:none!important;}
+.lang-toggle{display:inline-flex;gap:2px;background:rgba(255,255,255,.6);border:1px solid var(--border-2);border-radius:999px;padding:2px;}
+.lang-btn{background:transparent;color:var(--ink-2);border:none;border-radius:999px;padding:4px 12px;font-weight:700;font-size:.8rem;box-shadow:none;cursor:pointer;}
+.lang-btn.on{background:var(--green);color:#fff;}
+.scale-row{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;}
+.scale-cap{font-size:.72rem;color:var(--muted);font-weight:600;}
+#scale-val{min-width:38px;text-align:center;}
+.flex-between{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+.chip-row{display:flex;gap:6px;flex-wrap:wrap;}
+#splash{position:fixed;inset:0;z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;background:var(--green-bg);}
+#splash img{height:64px;width:auto;}
+.spin{width:34px;height:34px;border:3px solid rgba(47,143,62,.25);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<div id="splash"><img class="brand-logo" src="assets/logo-novarea.png" alt="Novarea"><div class="spin"></div></div>
+
+<!-- ============================= LOGIN ============================= -->
+<div id="login" style="display:none;">
+  <div class="box glass">
+    <div class="brand">
+      <img class="brand-logo" src="assets/logo-novarea.png" alt="Novarea">
+      <div class="brand-sub">Canteen Access</div>
+    </div>
+    <div id="login-msg" class="small" style="color:var(--danger);min-height:18px;"></div>
+    <label>Username</label>
+    <input id="li-user" autocomplete="username" placeholder="e.g. admin">
+    <label>Password</label>
+    <input id="li-pass" type="password" autocomplete="current-password" placeholder="••••••••">
+    <button style="width:100%;margin-top:16px;" onclick="doLogin()">Sign in</button>
+    <div style="text-align:center;margin-top:16px;">
+      <span class="lang-toggle">
+        <button class="lang-btn" data-lang="fr" onclick="setLang('fr')">FR</button>
+        <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+      </span>
+    </div>
+    <p class="small muted" id="login-mode" style="margin-top:14px;text-align:center;"></p>
+  </div>
+</div>
+
+<!-- ============================= APP ============================= -->
+<div id="app">
+  <div class="sb-backdrop" onclick="closeNav()"></div>
+  <aside class="sidebar">
+    <div class="brand"><img class="brand-logo" src="assets/logo-novarea.png" alt="Novarea"><div class="brand-sub">Canteen Access</div></div>
+    <nav class="nav" id="nav"></nav>
+    <div class="sb-foot">
+      <div class="userchip"><span class="av" id="uc-av">?</span><div><div id="uc-name" style="font-weight:700;"></div><div class="small muted" id="uc-role"></div></div></div>
+      <button class="secondary small" id="installBtn" style="display:none;" onclick="doInstall()">⬇ Install app</button>
+      <button class="ghost small" onclick="logout()">⎋ Sign out</button>
+    </div>
+  </aside>
+  <div class="main-col">
+    <div class="mtopbar">
+      <button class="ghost" onclick="toggleNav()" style="font-size:1.3rem;padding:4px 10px;">☰</button>
+      <b id="mtitle" style="color:var(--green-dark);">Dashboard</b>
+      <span class="grow"></span>
+      <span class="pill"><span class="conn-dot" id="conn-dot2"></span><span id="conn-txt2">Local</span></span>
+      <img class="brand-logo" src="assets/logo-novarea.png" alt="Novarea" style="height:22px;">
+    </div>
+    <div class="content">
+      <!-- sections injected/toggled -->
+      <section class="section" id="s-dashboard"></section>
+      <section class="section" id="s-scanner"></section>
+      <section class="section" id="s-employees"></section>
+      <section class="section" id="s-badges"></section>
+      <section class="section" id="s-imports"></section>
+      <section class="section" id="s-reports"></section>
+      <section class="section" id="s-settings"></section>
+      <section class="section" id="s-users"></section>
+      <section class="section" id="s-audit"></section>
+      <section class="section" id="s-tests"></section>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-bg"><div class="modal glass" id="modal"></div></div>
+<div id="print-area"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* =====================================================================
+   Novarea Canteen — application controller (local-first + Supabase)
+   ===================================================================== */
+const CC = window.CanteenCore;
+const CLOUD = !!(window.SUPABASE_URL && window.SUPABASE_ANON_KEY);
+let SB = null;
+
+/* ---------- tiny helpers ---------- */
+const $ = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
+const esc = s => (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtMoney = n => (Number(n)||0).toLocaleString('fr-FR')+' FCFA';
+const todayISO = () => new Date().toISOString().slice(0,10);
+const nowISO = () => new Date().toISOString();
+function toast(m){const t=$('#toast');t.textContent=(typeof trPhrase==='function'&&trPhrase(m))||m;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),2600);}
+function uid(){return (crypto.randomUUID?crypto.randomUUID():'id-'+Date.now()+'-'+Math.random().toString(16).slice(2));}
+async function sha256(str){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');}
+
+/* =====================================================================
+   i18n — bilingual FR/EN. Screens render in English; translateDOM() maps
+   the rendered text to French (and back) using this dictionary keyed by
+   the English source string. Missing keys fall back to English.
+   ===================================================================== */
+let LANG = localStorage.getItem('ntbc_lang') || 'fr';
+const I18N = { fr: {
+  // shell / login
+  'Canteen Access & Meal Control':'Accès Cantine & Contrôle des Repas','Canteen Access':'Accès Cantine',
+  'Username':"Nom d'utilisateur",'Password':'Mot de passe','Sign in':'Se connecter',
+  'Local mode — data stays in this browser. Demo: admin / admin123':'Mode local — les données restent dans ce navigateur. Démo : admin / admin123',
+  'Cloud mode (multi-device, server-enforced).':'Mode cloud (multi-postes, contrôlé par le serveur).',
+  '⬇ Install app':"⬇ Installer l'app",'⎋ Sign out':'⎋ Se déconnecter','☰':'☰',
+  // nav + roles
+  'Dashboard':'Tableau de bord','Scanner':'Scanner','Employees':'Employés','Badges':'Badges',
+  'Import':'Import','Reports':'Rapports','Settings':'Paramètres','Users':'Utilisateurs',
+  'Audit log':"Journal d'audit",'Tests':'Tests',
+  'HR Administrator':'Administrateur RH','Canteen Scanner':'Agent de cantine',
+  'Finance Viewer':'Consultation Finance','Food Provider Viewer':'Consultation Prestataire',
+  'Local':'Local','Online':'En ligne','Offline':'Hors ligne','Offline — queueing':'Hors ligne — en file',
+  'Text size':'Taille du texte','Smaller text':'Réduire le texte','Larger text':'Agrandir le texte',
+  // generic table headers / words
+  'ID':'ID','Name':'Nom','Category':'Catégorie','Dept':'Dépt','Department':'Département',
+  'Status':'Statut','Access':'Accès','Eligible':'Éligible','Badge':'Badge','Position':'Poste',
+  'Joined':'Entré(e)','Employee ID':'Matricule','Badge ref':'Réf badge','Role':'Rôle',
+  'When':'Quand','User':'Utilisateur','Action':'Action','Entity':'Entité','Detail':'Détail',
+  'Service':'Service','Active':'Actif','Inactive':'Inactif','Exited':'Sorti','From':'Du','To':'Au',
+  'Amount':'Montant','Contact':'Contact','File':'Fichier','Date':'Date','Time':'Heure',
+  'Full Name':'Nom complet','Method':'Méthode','Unit Price':'Prix unitaire',
+  'active':'actif','none':'aucun','missing':'absent','Yes':'Oui','No':'Non',
+  'Eligible':'Éligible','Not eligible':'Non éligible','None':'Aucun',
+  // dashboard KPIs
+  'Eligible employees':'Employés éligibles','Eligible not served':'Éligibles non servis',
+  'Utilization rate':"Taux d'utilisation",'Manual entries':'Saisies manuelles',
+  'Billable today':"Facturable aujourd'hui",'Billable 7 days':'Facturable 7 jours',
+  'Billable this month':'Facturable ce mois','Meals by department':'Repas par département',
+  'Meals by hour':'Repas par heure','No meals yet.':"Aucun repas pour l'instant.",
+  // employees
+  'No employees. Import the staff Excel file.':'Aucun employé. Importez le fichier Excel du personnel.',
+  'All categories':'Toutes catégories','Open':'Ouvrir','Access override':"Dérogation d'accès",
+  'Save access':"Enregistrer l'accès",'Print badge':'Imprimer le badge','Revoke badge':'Révoquer le badge',
+  'Generate badge':'Générer le badge','Close':'Fermer',
+  // badges
+  'Eligible':'Éligibles','With active badge':'Avec badge actif','Missing badge':'Sans badge',
+  '🖨 Print all eligible':'🖨 Imprimer tous les éligibles','Print':'Imprimer','Generate':'Générer',
+  'No printable badge.':'Aucun badge à imprimer.','CANTEEN ACCESS':'ACCÈS CANTINE',
+  // import
+  'Import staff list (Excel)':'Importer la liste du personnel (Excel)','Import history':'Historique des imports',
+  'Upload the current ':'Importez le classeur ',
+  ' workbook. The app auto-detects the employee sheet by its headers (Employee ID + Staff/ANPE/PSIE), previews the changes, then imports on your confirmation.':' actuel. L\'app détecte automatiquement la feuille des employés grâce à ses en-têtes (Employee ID + Staff/ANPE/PSIE), affiche un aperçu, puis importe après votre confirmation.',
+  'Reading workbook…':'Lecture du classeur…','No imports yet.':'Aucun import.',
+  '❌ Could not find an employee sheet (need Employee ID + Staff/ANPE/PSIE headers).':'❌ Feuille des employés introuvable (en-têtes Employee ID + Staff/ANPE/PSIE requis).',
+  'Preview — confirm to apply':'Aperçu — confirmer pour appliquer','✔ Confirm import':"✔ Confirmer l'import",
+  'Cancel':'Annuler','Rows read':'Lignes lues','New':'Nouveaux','Updated':'Mis à jour','Unchanged':'Inchangés',
+  'Eligible Agents':'Agents éligibles','Newly eligible':'Nouvellement éligibles','Lost eligibility':'Éligibilité perdue',
+  'Duplicates in file':'Doublons fichier','Invalid rows':'Lignes invalides','Missing from file':'Absents du fichier',
+  // reports
+  'Valid meals':'Repas valides','Cancelled':'Annulés','Billable amount':'Montant facturable',
+  '⬇ Daily report':'⬇ Rapport journalier','⬇ Provider summary':'⬇ Synthèse prestataire',
+  '⬇ Eligible list':'⬇ Liste des éligibles','⬇ Exceptions':'⬇ Exceptions',
+  // settings
+  'Preferences':'Préférences','Language':'Langue','Theme':'Thème','Auto':'Auto','Light':'Clair','Dark':'Sombre',
+  'Data':'Données',
+  'Clears the cache on this device and reloads the latest version. Cloud data is not affected.':'Vide le cache de cet appareil et recharge la dernière version. Les données cloud ne sont pas affectées.',
+  '↺ Reset local data':'↺ Réinitialiser les données locales',
+  'Danger zone: permanently delete ALL cloud data (employees, badges, meals). Cannot be undone.':'Zone sensible : supprime DÉFINITIVEMENT toutes les données cloud (employés, badges, repas). Irréversible.',
+  '🗑 Delete cloud data':'🗑 Supprimer les données du cloud',
+  'Reset local data on this device? You will be logged out. Cloud data is NOT affected.':'Réinitialiser les données locales de cet appareil ? Vous serez déconnecté. Les données cloud ne sont PAS affectées.',
+  'Install':'Installation','App already installed.':'App déjà installée.',
+  'Install the app':"Installer l'application",
+  'Android (Chrome): open the browser menu (⋮, top right) and tap "Install app".':'Android (Chrome) : ouvrez le menu du navigateur (⋮, en haut à droite) et touchez « Installer l\'application ».',
+  'iPhone (Safari): tap the Share button and "Add to Home Screen".':'iPhone (Safari) : touchez le bouton Partager puis « Sur l\'écran d\'accueil ».',
+  'Computer (Chrome/Edge): click the install icon at the right of the address bar.':'Ordinateur (Chrome/Edge) : cliquez sur l\'icône d\'installation à droite de la barre d\'adresse.',
+  "If you don't see the option, the app is probably already installed.":"Si l'option n'apparaît pas, l'app est probablement déjà installée.",
+  'To install: open the browser menu and tap "Add to Home screen".':'Pour installer : ouvrez le menu du navigateur et touchez « Ajouter à l\'écran d\'accueil ».',
+  'Meal services':'Services de repas','Meal service':'Service de repas','Lunch is the only meal service served.':'Le déjeuner est le seul service de repas.','Only active services can be scanned. Lunch is enabled for launch.':'Seuls les services actifs peuvent être scannés. Le déjeuner est activé au lancement.',
+  'Meal price (versioned)':'Prix du repas (versionné)',
+  'Adding a new price keeps the old one for historical reports. Current:':'Ajouter un nouveau prix conserve l\'ancien pour les rapports historiques. Actuel :',
+  'Amount (FCFA)':'Montant (FCFA)','Effective from':'Effectif à partir du','Add price':'Ajouter le prix',
+  'Food providers':'Prestataires','Add':'Ajouter','Lunch':'Déjeuner','Breakfast':'Petit-déjeuner','Dinner':'Dîner','Other':'Autre',
+  'Gross':'Brut','Adjustment':'Ajustement','Net billable':'Net facturable',
+  // users
+  'Add user':'Ajouter un utilisateur','Reset password':'Réinit. mot de passe','Delete':'Supprimer','New password:':'Nouveau mot de passe :',
+  'Username exists':"Nom d'utilisateur déjà pris",
+  // audit / tests
+  'No events.':'Aucun événement.','Automated tests':'Tests automatisés',
+  'Runs the real unit tests (eligibility, one-meal rule, billing, import mapping) in this browser.':'Exécute les vrais tests unitaires (éligibilité, règle un repas, facturation, mapping import) dans ce navigateur.',
+  '▶ Run tests':'▶ Lancer les tests','Test':'Test','passed':'réussis','failed':'échoués',
+  // scanner
+  '▶ Start camera':'▶ Démarrer la caméra','⏸ Stop':'⏸ Arrêter','⌨ Manual ID':'⌨ Matricule manuel',
+  'Point the camera at a badge QR code.':'Pointez la caméra vers le QR code du badge.',
+  'Service:':'Service :','Served this session:':'Servis cette session :','Camera unavailable':'Caméra indisponible',
+  'Use the Manual ID button.':'Utilisez le bouton Matricule manuel.','Manual Employee ID':'Matricule manuel',
+  'Look up & confirm':'Rechercher & confirmer','No employee with that ID.':'Aucun employé avec ce matricule.',
+  'MEAL AUTHORIZED':'REPAS AUTORISÉ','MEAL ALREADY RECORDED':'REPAS DÉJÀ ENREGISTRÉ',
+  'ACCESS NOT AUTHORIZED':'ACCÈS NON AUTORISÉ','INVALID OR REVOKED BADGE':'BADGE INVALIDE OU RÉVOQUÉ',
+  'EMPLOYEE NOT FOUND':'EMPLOYÉ INTROUVABLE','Scanner library still loading…':'Bibliothèque scanner en cours de chargement…',
+  'Camera unavailable — use Manual ID.':'Caméra indisponible — utilisez le Matricule manuel.',
+  // eligibility reasons
+  'Eligible — Agent, active':'Éligible — Agent, actif','Eligible — manually allowed':'Éligible — autorisé manuellement',
+  'Not eligible — category is not Agent':'Non éligible — catégorie non Agent','Not eligible — employee is inactive':'Non éligible — employé inactif',
+  'Not eligible — employee has left the company':"Non éligible — employé sorti de l'entreprise",'Not eligible — access manually blocked':'Non éligible — accès bloqué manuellement',
+  'Not eligible — incomplete employee record':'Non éligible — dossier employé incomplet',
+  // toasts
+  'Access updated.':'Accès mis à jour.','Badge generated.':'Badge généré.','Badge revoked.':'Badge révoqué.',
+  'Saved.':'Enregistré.','Price added.':'Prix ajouté.','Provider added.':'Prestataire ajouté.',
+  'User added.':'Utilisateur ajouté.','Password reset.':'Mot de passe réinitialisé.',
+  'Not permitted for your role.':'Non autorisé pour votre rôle.','Cloud update failed':'Échec de la mise à jour cloud',
+  // placeholders
+  'e.g. admin':'ex. admin','e.g. 250015':'ex. 250015','Search name / ID / department':'Rechercher nom / matricule / département',
+  'username':"nom d'utilisateur",'full name':'nom complet','password':'mot de passe',
+  'Provider name':'Nom du prestataire'
+} };
+const PATTERNS = [
+  [/^Meals served \((.+)\)$/, m=>`Repas servis (${m[1]})`],
+  [/^Generate (\d+) missing$/, m=>`Générer ${m[1]} manquant(s)`],
+  [/^Reason: (.+)$/, m=>`Motif : ${I18N.fr[m[1]]||m[1]}`],
+  [/^First passage: (.+)$/, m=>`Premier passage : ${m[1]}`],
+  [/^Time: (.+)$/, m=>`Heure : ${m[1]}`],
+  [/^(\d+) badges generated\.$/, m=>`${m[1]} badges générés.`],
+  [/^Import applied: (\d+) new, (\d+) updated\.$/, m=>`Import appliqué : ${m[1]} nouveaux, ${m[2]} mis à jour.`],
+  [/^(\d+) row\(s\) skipped for missing Employee ID\.$/, m=>`${m[1]} ligne(s) ignorée(s) — matricule manquant.`],
+  [/^Duplicate IDs in file: (.+)$/, m=>`Matricules en double : ${m[1]}`],
+  [/^Delete (.+)\?$/, m=>`Supprimer ${m[1]} ?`],
+  [/^❌ Import failed: (.+)$/, m=>`❌ Échec de l'import : ${m[1]}`],
+  [/^· (\d+) rows · (\d+) exit IDs$/, m=>`· ${m[1]} lignes · ${m[2]} IDs de sortie`],
+  [/^Employees$/, ()=>'Employés']
+];
+function trPhrase(raw){
+  if(LANG!=='fr' || raw==null) return null;
+  if(I18N.fr[raw]!==undefined) return I18N.fr[raw];
+  for(const [re,fn] of PATTERNS){ const m=raw.match(re); if(m) return fn(m); }
+  return null;
+}
+// Translate rendered DOM to LANG, caching each node's English original so we can toggle both ways.
+function translateDOM(root){
+  root = root || document.body;
+  const walker=document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {acceptNode:n=>{
+    const p=n.parentNode&&n.parentNode.nodeName;
+    return (p==='SCRIPT'||p==='STYLE') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
+  }});
+  const nodes=[]; while(walker.nextNode()) nodes.push(walker.currentNode);
+  nodes.forEach(n=>{
+    if(n._en===undefined) n._en=n.nodeValue;
+    const raw=n._en.trim(); if(!raw) return;
+    const fr=trPhrase(raw);
+    n.nodeValue = (LANG==='fr'&&fr!=null) ? n._en.replace(raw,fr) : n._en;
+  });
+  root.querySelectorAll('[placeholder]').forEach(el=>{
+    if(el._enPh===undefined) el._enPh=el.getAttribute('placeholder');
+    const fr=trPhrase((el._enPh||'').trim());
+    el.setAttribute('placeholder', (LANG==='fr'&&fr!=null)?fr:el._enPh);
+  });
+  root.querySelectorAll('[title]').forEach(el=>{
+    if(el._enTitle===undefined) el._enTitle=el.getAttribute('title');
+    const fr=trPhrase((el._enTitle||'').trim());
+    el.setAttribute('title', (LANG==='fr'&&fr!=null)?fr:el._enTitle);
+  });
+}
+function setLang(l){ LANG=l; localStorage.setItem('ntbc_lang',l); applyLang(); }
+function applyLang(){
+  document.documentElement.lang=LANG;
+  $$('.lang-btn[data-lang]').forEach(b=>b.classList.toggle('on', b.dataset.lang===LANG));
+  if(SESSION && CURRENT){ try{ ({dashboard:renderDashboard,scanner:renderScanner,employees:renderEmployees,badges:renderBadges,imports:renderImports,reports:renderReports,settings:renderSettings,users:renderUsers,audit:renderAudit,tests:renderTests}[CURRENT]||(()=>{}))(); }catch(e){} }
+  translateDOM(document.body);
+}
+
+/* ---------- UI text scale (accessibility / density) ---------- */
+let UISCALE = parseInt(localStorage.getItem('ntbc_scale')||'100',10);
+if(isNaN(UISCALE)) UISCALE=100;
+function applyScale(){
+  document.documentElement.style.fontSize = (16*UISCALE/100)+'px';
+  const el=$('#scale-val'); if(el) el.textContent=UISCALE+'%';
+}
+function stepScale(d){
+  UISCALE=Math.max(75,Math.min(125,UISCALE+d*5));
+  localStorage.setItem('ntbc_scale',UISCALE);
+  applyScale();
+}
+
+/* ---------- Theme (light / dark / auto) ---------- */
+let THEME = localStorage.getItem('ntbc_theme')||'auto';
+function effectiveTheme(){
+  if(THEME==='auto') return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  return THEME;
+}
+function applyTheme(){
+  const eff=effectiveTheme();
+  document.documentElement.setAttribute('data-theme', eff);
+  const meta=document.querySelector('meta[name="theme-color"]'); if(meta) meta.setAttribute('content', eff==='dark'?'#0c150f':'#1f6b2b');
+  $$('.brand-logo').forEach(img=>{ img.src = eff==='dark' ? 'assets/logo-novarea-white.png' : 'assets/logo-novarea.png'; });
+  $$('.lang-btn[data-theme]').forEach(b=>b.classList.toggle('on', b.dataset.theme===THEME));
+}
+function setTheme(t){ THEME=t; localStorage.setItem('ntbc_theme',t); applyTheme(); }
+if(window.matchMedia){ try{ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{ if(THEME==='auto') applyTheme(); }); }catch(e){} }
+
+/* ---------- local persistence ---------- */
+const COLLS = ['employees','badges','meals','services','prices','providers','users','audit','imports','settings'];
+const KEY = c => 'ntbc_'+c;
+const state = {};
+function loadLocal(){ COLLS.forEach(c=>{ try{ state[c]=JSON.parse(localStorage.getItem(KEY(c))||(c==='settings'?'{}':'[]')); }catch(e){ state[c]=(c==='settings'?{}:[]); } }); }
+function saveLocal(c){ localStorage.setItem(KEY(c),JSON.stringify(state[c])); }
+function saveAll(){ COLLS.forEach(saveLocal); }
+
+/* ---------- session ---------- */
+let SESSION = null;             // {userId,name,role,sessionId}
+let SCAN_SESSION_ID = null;
+const ROLES = {
+  HR_ADMIN:'HR Administrator', SCANNER:'Canteen Scanner',
+  FINANCE_VIEWER:'Finance Viewer', PROVIDER_VIEWER:'Food Provider Viewer'
+};
+const NAV = [
+  {id:'dashboard', ic:'▦', label:'Dashboard', roles:['HR_ADMIN','FINANCE_VIEWER','PROVIDER_VIEWER']},
+  {id:'scanner',   ic:'▣', label:'Scanner',   roles:['HR_ADMIN','SCANNER']},
+  {id:'employees', ic:'▤', label:'Employees', roles:['HR_ADMIN']},
+  {id:'badges',    ic:'❐', label:'Badges',    roles:['HR_ADMIN']},
+  {id:'imports',   ic:'⇪', label:'Import',    roles:['HR_ADMIN']},
+  {id:'reports',   ic:'⇩', label:'Reports',   roles:['HR_ADMIN','FINANCE_VIEWER','PROVIDER_VIEWER']},
+  {id:'settings',  ic:'⚙', label:'Settings',  roles:['HR_ADMIN','SCANNER','FINANCE_VIEWER','PROVIDER_VIEWER']},
+  {id:'users',     ic:'☺', label:'Users',     roles:['HR_ADMIN']},
+  {id:'audit',     ic:'❏', label:'Audit log', roles:['HR_ADMIN']},
+  {id:'tests',     ic:'✓', label:'Tests',     roles:['HR_ADMIN']}
+];
+function can(role, section){ const n=NAV.find(x=>x.id===section); return n && n.roles.includes(role); }
+
+/* ---------- audit ---------- */
+async function audit(action, entity, entityId, oldV, newV){
+  const rec={ id:uid(), userId:SESSION?.userId, userEmail:SESSION?.name, action, entity, entityId:String(entityId||''),
+    oldValue:oldV||null, newValue:newV||null, sessionId:SESSION?.sessionId, createdAt:nowISO() };
+  if(CLOUD){ try{ await SB.from('audit_log').insert({ user_id:SESSION?.userId, user_email:SESSION?.name, action, entity, entity_id:String(entityId||''), old_value:oldV, new_value:newV, session_id:SESSION?.sessionId }); }catch(e){} }
+  else { state.audit.unshift(rec); if(state.audit.length>2000)state.audit.pop(); saveLocal('audit'); }
+}
+
+/* ===================================================================
+   BOOT
+   =================================================================== */
+window.addEventListener('DOMContentLoaded', boot);
+async function boot(){
+  loadLocal();
+  setTimeout(()=>{ if(!SESSION) showLogin(); }, 6000);   // safety: never stay stuck on splash
+  if(CLOUD && window.supabase){ SB = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY); }
+  else if(CLOUD){ // supabase script may still be loading (defer)
+    await new Promise(r=>{const t=setInterval(()=>{if(window.supabase){clearInterval(t);r();}},50);setTimeout(r,3000);});
+    if(window.supabase) SB = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+  }
+  $('#login-mode').textContent = CLOUD ? 'Cloud mode (multi-device, server-enforced).'
+    : 'Local mode — data stays in this browser. Demo: admin / admin123';
+  applyLang();
+  applyScale();
+  applyTheme();
+  updateConn();
+  window.addEventListener('online',updateConn); window.addEventListener('offline',updateConn);
+  if(!CLOUD){ await seedIfEmpty(); }
+  // restore session
+  if(CLOUD && SB){
+    // Cloud: rely on Supabase's own persisted session (survives PWA relaunch),
+    // not sessionStorage. Re-derive the app SESSION from it and reload cloud data.
+    try{
+      const { data:{ session } } = await SB.auth.getSession();
+      if(session && session.user){
+        let prof=null;
+        try{ const r=await SB.from('profiles').select('*').eq('id',session.user.id).single(); prof=r.data; }catch(e){}
+        let cached=null; try{ cached=JSON.parse(localStorage.getItem('ntbc_session')||'null'); }catch(e){}
+        SESSION={ userId:session.user.id,
+          name:(prof&&prof.full_name)||(cached&&cached.name)||session.user.email,
+          role:(prof&&prof.role)||(cached&&cached.role)||'SCANNER', sessionId:uid() };
+        localStorage.setItem('ntbc_session',JSON.stringify({userId:SESSION.userId,name:SESSION.name,role:SESSION.role}));
+        enterApp();
+      }
+    }catch(e){}
+  } else {
+    const raw = localStorage.getItem('ntbc_session');
+    if(raw){ try{ SESSION=JSON.parse(raw); enterApp(); }catch(e){} }
+  }
+  if(!SESSION) showLogin();   // no session restored -> reveal the login form (splash hides)
+  // service worker
+  if('serviceWorker' in navigator){ navigator.serviceWorker.register('service-worker.js').catch(()=>{}); }
+  // install prompt
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();window._deferredPrompt=e;$('#installBtn').style.display='';});
+  $('#li-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+}
+function updateConn(){
+  const online=navigator.onLine;
+  const cls = CLOUD ? (online?'conn-online':'conn-offline') : 'conn-local';
+  const txt = CLOUD ? (online?'Online':'Offline') : 'Local';
+  $$('#conn-dot2,.conn-dot').forEach(d=>d.className='conn-dot '+cls);
+  $('#conn-txt2') && ($('#conn-txt2').textContent=txt);
+}
+
+/* ---------- demo seed (local mode) ---------- */
+async function seedIfEmpty(){
+  if(state.users.length) return;
+  const mk = async (u,p,role,name)=>({ id:uid(), username:u, name:name, role, passHash:await sha256(p+'::ntbc') });
+  state.users = [
+    await mk('admin','admin123','HR_ADMIN','HR Administrator'),
+    await mk('scanner','scan123','SCANNER','Canteen Scanner'),
+    await mk('finance','fin123','FINANCE_VIEWER','Finance Viewer')
+  ];
+  state.services = [
+    {id:'lunch',label:'Lunch',isActive:true}
+  ];
+  state.prices = [{ id:uid(), amount:1000, currency:'XOF', effectiveFrom:'2026-01-01', effectiveTo:null, providerId:null, changedBy:'seed', createdAt:nowISO() }];
+  state.providers = [{ id:uid(), name:'Cantine Prestataire', contact:'', status:'ACTIVE', createdAt:nowISO() }];
+  state.settings = { mealPrice:1000, currency:'XOF', activeService:'lunch' };
+  // demo employees across categories
+  const demo = [
+    ['250015','KOUDORO Ada','Agent','Weaving'],
+    ['250016','ADANOU Ben','Agent','Dyeing'],
+    ['250017','TOSSOU Cible','Agent','Weaving'],
+    ['240002','LAWSON Delia','ANPE','Spinning'],
+    ['240003','GBEGO Emile','Staff','Admin'],
+    ['250050','MENSAH Fofo','PSIE','Quality']
+  ];
+  state.employees = demo.map(([id,nm,cat,dep])=>{
+    const e={ employeeId:id, fullName:nm, sourceCategory:cat, department:dep, position:'Operator',
+      employmentStatus:'Active', accessOverride:'AUTO', joiningDate:'2025-02-01', contractType:'CDD',
+      valid:true, createdAt:nowISO(), updatedAt:nowISO() };
+    const el=CC.computeEligibility(e); e.isEligible=el.eligible; e.eligibilityReason=el.reasonCode; return e;
+  });
+  // badges for agents; one revoked demo badge
+  state.badges = [];
+  state.employees.filter(e=>e.sourceCategory==='Agent').forEach(e=>issueBadgeLocal(e.employeeId));
+  // revoke one to demo
+  if(state.badges[2]){ state.badges[2].status='REVOKED'; state.badges[2].revokedAt=nowISO(); }
+  // demo meals: one valid QR, one manual, one cancelled
+  const price=1000;
+  state.meals = [
+    { id:uid(), employeeId:'250015', mealDate:todayISO(), mealServiceId:'lunch', scannedAt:nowISO(), scannerUserId:'seed', scanMethod:'QR', eligibilityStatusAtScan:'ELIGIBLE_AGENT', sourceCategoryAtScan:'Agent', unitPrice:price, currency:'XOF', status:'VALID', createdAt:nowISO() },
+    { id:uid(), employeeId:'250016', mealDate:todayISO(), mealServiceId:'lunch', scannedAt:nowISO(), scannerUserId:'seed', scanMethod:'MANUAL_ID', eligibilityStatusAtScan:'ELIGIBLE_AGENT', sourceCategoryAtScan:'Agent', unitPrice:price, currency:'XOF', status:'VALID', createdAt:nowISO() },
+    { id:uid(), employeeId:'250017', mealDate:todayISO(), mealServiceId:'lunch', scannedAt:nowISO(), scannerUserId:'seed', scanMethod:'QR', eligibilityStatusAtScan:'ELIGIBLE_AGENT', sourceCategoryAtScan:'Agent', unitPrice:price, currency:'XOF', status:'CANCELLED', cancelReason:'Served by mistake (demo)', cancelledBy:'seed', cancelledAt:nowISO(), createdAt:nowISO() }
+  ];
+  saveAll();
+}
+function issueBadgeLocal(employeeId){
+  const token=CC.genQrToken();
+  const b={ id:uid(), employeeId, token, displayTokenReference:CC.tokenReference(token), status:'ACTIVE', issuedAt:nowISO(), revokedAt:null };
+  state.badges.push(b); return b;
+}
+
+/* ===================================================================
+   AUTH
+   =================================================================== */
+async function doLogin(){
+  const u=$('#li-user').value.trim(), p=$('#li-pass').value;
+  $('#login-msg').textContent='';
+  if(CLOUD){
+    try{
+      const {data,error}=await SB.auth.signInWithPassword({email:u,password:p});
+      if(error) throw error;
+      const {data:prof}=await SB.from('profiles').select('*').eq('id',data.user.id).single();
+      SESSION={ userId:data.user.id, name:prof?.full_name||u, role:prof?.role||'SCANNER', sessionId:uid() };
+      localStorage.setItem('ntbc_session',JSON.stringify({userId:SESSION.userId,name:SESSION.name,role:SESSION.role}));
+      await audit('LOGIN','session',SESSION.userId);
+      enterApp();
+    }catch(e){ $('#login-msg').textContent='Sign-in failed: '+(e.message||e); }
+    return;
+  }
+  const user=state.users.find(x=>x.username.toLowerCase()===u.toLowerCase());
+  if(!user){ $('#login-msg').textContent='Unknown user.'; return; }
+  const h=await sha256(p+'::ntbc');
+  if(h!==user.passHash){ $('#login-msg').textContent='Wrong password.'; return; }
+  SESSION={ userId:user.id, name:user.name, role:user.role, sessionId:uid() };
+  localStorage.setItem('ntbc_session',JSON.stringify(SESSION));
+  await audit('LOGIN','session',user.id);
+  enterApp();
+}
+async function logout(){
+  await audit('LOGOUT','session',SESSION?.userId);
+  if(CLOUD && SB){ try{ if(_mealChannel){ SB.removeChannel(_mealChannel); _mealChannel=null; } }catch(e){} try{ await SB.auth.signOut(); }catch(e){} }
+  stopScanner();
+  SESSION=null; localStorage.removeItem('ntbc_session'); sessionStorage.removeItem('ntbc_session');
+  $('#app').classList.remove('on'); $('#login').style.display='flex';
+  $('#li-pass').value='';
+}
+function hideSplash(){ const s=$('#splash'); if(s) s.style.display='none'; }
+function showLogin(){ hideSplash(); const l=$('#login'); if(l) l.style.display='flex'; }
+function enterApp(){
+  hideSplash();
+  $('#login').style.display='none';
+  $('#app').classList.add('on');
+  $('#uc-name').textContent=SESSION.name;
+  $('#uc-role').textContent=ROLES[SESSION.role]||SESSION.role;
+  $('#uc-av').textContent=(SESSION.name||'?').slice(0,1).toUpperCase();
+  buildNav();
+  const first = NAV.find(n=>n.roles.includes(SESSION.role));
+  showSection(first?first.id:'dashboard');
+  updateConn();
+  if(CLOUD) cloudLoadAll();
+}
+function buildNav(){
+  $('#nav').innerHTML = NAV.filter(n=>n.roles.includes(SESSION.role))
+    .map(n=>`<a data-sec="${n.id}" onclick="showSection('${n.id}')"><span class="ic">${n.ic}</span> ${n.label}</a>`).join('');
+}
+
+/* ===================================================================
+   NAV / ROUTING
+   =================================================================== */
+function toggleNav(){document.body.classList.toggle('nav-open');}
+function closeNav(){document.body.classList.remove('nav-open');}
+let CURRENT=null;
+function showSection(id){
+  if(!can(SESSION.role,id)){ toast('Not permitted for your role.'); return; }
+  if(CURRENT==='scanner' && id!=='scanner') stopScanner();
+  CURRENT=id;
+  $$('.section').forEach(s=>s.classList.remove('on'));
+  $('#s-'+id).classList.add('on');
+  $$('#nav a').forEach(a=>a.classList.toggle('active',a.dataset.sec===id));
+  $('#mtitle').textContent=(NAV.find(n=>n.id===id)||{}).label||'';
+  closeNav();
+  ({dashboard:renderDashboard,scanner:renderScanner,employees:renderEmployees,badges:renderBadges,
+    imports:renderImports,reports:renderReports,settings:renderSettings,users:renderUsers,
+    audit:renderAudit,tests:renderTests}[id]||(()=>{}))();
+  translateDOM(document.body);
+}
+
+/* ---------- data access (works local or cloud in-memory mirror) ---------- */
+function getEmployees(){ return state.employees; }
+function getMeals(){ return state.meals; }
+function activeService(){ const s=state.services.find(x=>x.isActive); return s||state.services.find(x=>x.id==='lunch')||{id:'lunch',label:'Lunch'}; }
+function currentPrice(dateISO){
+  const d=dateISO||todayISO();
+  const applicable=state.prices.filter(p=>p.effectiveFrom<=d && (!p.effectiveTo||p.effectiveTo>=d));
+  applicable.sort((a,b)=>b.effectiveFrom.localeCompare(a.effectiveFrom));
+  return applicable[0] ? Number(applicable[0].amount) : (state.settings.mealPrice||1000);
+}
+function empById(id){ return state.employees.find(e=>String(e.employeeId)===String(id)); }
+function badgeByToken(tok){ return state.badges.find(b=>b.token===tok); }
+function activeBadgeOf(id){ return state.badges.find(b=>String(b.employeeId)===String(id)&&b.status==='ACTIVE'); }
+function recomputeEligibility(e){ const el=CC.computeEligibility(e); e.isEligible=el.eligible; e.eligibilityReason=el.reasonCode; return el; }
+
+/* ===================================================================
+   SCANNER
+   =================================================================== */
+let html5Qr=null, scanRunning=false, lastToken=null, lastAt=0, sessionCount=0;
+function renderScanner(){
+  const svc=activeService();
+  $('#s-scanner').innerHTML=`
+   <div class="flex-between">
+     <h2 style="margin:0;">Scanner</h2>
+     <div class="row">
+       <span class="pill"><span class="conn-dot" id="scan-conn"></span><span id="scan-conn-t"></span></span>
+       <span class="pill">Service: <b>&nbsp;${esc(svc.label)}</b></span>
+       <span class="pill">Served this session: <b id="scan-count">&nbsp;${sessionCount}</b></span>
+     </div>
+   </div>
+   <div class="card solid" style="max-width:520px;margin:14px auto;">
+     <div id="scan-reader"></div>
+     <div class="row" style="margin-top:12px;justify-content:center;">
+       <button id="scan-start" onclick="startScanner()">▶ Start camera</button>
+       <button class="secondary" onclick="stopScanner()">⏸ Stop</button>
+       <button class="secondary" onclick="manualEntry()">⌨ Manual ID</button>
+     </div>
+     <div id="scan-result" class="scan-result idle"><div>Point the camera at a badge QR code.</div></div>
+   </div>`;
+  updateScanConn();
+  if(!SCAN_SESSION_ID) SCAN_SESSION_ID=uid();
+}
+function updateScanConn(){ const el=$('#scan-conn'); if(!el)return; const online=navigator.onLine;
+  el.className='conn-dot '+(CLOUD?(online?'conn-online':'conn-offline'):'conn-local');
+  $('#scan-conn-t').textContent=CLOUD?(online?'Online':'Offline — queueing'):'Local'; }
+async function startScanner(){
+  if(scanRunning) return;
+  if(!window.Html5Qrcode){ toast('Scanner library still loading…'); return; }
+  html5Qr=new Html5Qrcode('scan-reader',{verbose:false});
+  try{
+    await html5Qr.start({facingMode:'environment'},{fps:10,qrbox:{width:230,height:230}},
+      onScan, ()=>{});
+    scanRunning=true; $('#scan-start').disabled=true;
+  }catch(e){ toast('Camera unavailable — use Manual ID.'); showScanResult('idle','Camera unavailable','Use the Manual ID button.'); }
+}
+async function stopScanner(){ if(html5Qr&&scanRunning){ try{await html5Qr.stop();}catch(e){} try{html5Qr.clear();}catch(e){} } scanRunning=false; const b=$('#scan-start'); if(b)b.disabled=false; }
+function onScan(text){
+  const now=Date.now();
+  if(text===lastToken && now-lastAt<3000) return; // anti-replay debounce
+  lastToken=text; lastAt=now;
+  processToken(text,'QR');
+}
+async function processToken(token,method){
+  // brief pause during validation
+  const b=badgeByToken(token);
+  if(!b){ showScanResult('no','INVALID OR REVOKED BADGE',''); beep(false); return; }
+  if(b.status!=='ACTIVE'){ showScanResult('no','INVALID OR REVOKED BADGE',''); beep(false); return; }
+  await validateAndRecord(b.employeeId, method||'QR');
+}
+async function validateAndRecord(employeeId, method){
+  const e=empById(employeeId);
+  if(!e){ showScanResult('no','EMPLOYEE NOT FOUND',employeeId); beep(false); return; }
+  const el=CC.computeEligibility(e);
+  const svc=activeService();
+  const name=`${esc(e.fullName)} — ${esc(e.employeeId)} — ${esc(e.department||'')}`;
+  if(!el.eligible){
+    showScanResult(el.reasonCode==='NOT_AGENT'?'warn':'no','ACCESS NOT AUTHORIZED', name, 'Reason: '+el.reason);
+    await audit('SCAN_DENIED','employee',employeeId,null,{reason:el.reasonCode,method});
+    beep(false); return;
+  }
+  const check=CC.canServeMeal(getMeals(),employeeId,todayISO(),svc.id);
+  if(!check.allowed){
+    const t=check.firstRecord? new Date(check.firstRecord.scannedAt).toLocaleTimeString('fr-FR'):'';
+    showScanResult('no','MEAL ALREADY RECORDED', name, 'First passage: '+t);
+    beep(false); return;
+  }
+  // record
+  const price=currentPrice();
+  const rec={ id:uid(), employeeId, mealDate:todayISO(), mealServiceId:svc.id, scannedAt:nowISO(),
+    scannerUserId:SESSION.userId, scannerSessionId:SCAN_SESSION_ID, scanMethod:method,
+    eligibilityStatusAtScan:el.reasonCode, sourceCategoryAtScan:e.sourceCategory, unitPrice:price, currency:'XOF',
+    status:'VALID', syncStatus:navigator.onLine?'SYNCED':'PENDING', createdAt:nowISO() };
+  let saved=false;
+  if(CLOUD){
+    try{
+      const {error}=await SB.from('meal_records').insert(mapMealToDb(rec));
+      if(error){ if((error.message||'').match(/duplicate|unique/i)){ showScanResult('no','MEAL ALREADY RECORDED',name,''); beep(false); return; } throw error; }
+      saved=true; state.meals.push(rec);
+    }catch(e2){ // offline queue
+      rec.syncStatus='PENDING'; state.meals.push(rec); saveLocal('meals'); saved=true;
+    }
+  } else { state.meals.push(rec); saveLocal('meals'); saved=true; }
+  if(saved){
+    sessionCount++; $('#scan-count')&&($('#scan-count').textContent=' '+sessionCount);
+    showScanResult('ok','MEAL AUTHORIZED', name, 'Time: '+new Date().toLocaleTimeString('fr-FR'));
+    beep(true); vibrate();
+    await audit('MEAL_SERVED','meal',rec.id,null,{employeeId,method,price});
+  }
+}
+function showScanResult(kind,big,name,sub){
+  const el=$('#scan-result'); if(!el)return;
+  el.className='scan-result '+kind;
+  el.innerHTML=`<div class="big">${esc(big)}</div>${name?`<div class="nm">${name}</div>`:''}${sub?`<div class="small" style="opacity:.9;margin-top:4px;">${esc(sub)}</div>`:''}`;
+  translateDOM(el);
+}
+function beep(good){ try{ const a=new (window.AudioContext||window.webkitAudioContext)(); const o=a.createOscillator(),g=a.createGain(); o.connect(g);g.connect(a.destination); o.frequency.value=good?880:220; g.gain.value=.08; o.start(); setTimeout(()=>{o.stop();a.close();},good?140:320);}catch(e){} }
+function vibrate(){ if(navigator.vibrate) navigator.vibrate(80); }
+function manualEntry(){
+  openModal(`<h3>Manual Employee ID</h3>
+    <label>Employee ID</label><input id="me-id" placeholder="e.g. 250015">
+    <div id="me-preview" class="small muted" style="margin-top:8px;"></div>
+    <div class="row" style="margin-top:14px;justify-content:flex-end;">
+      <button class="secondary" onclick="closeModal()">Cancel</button>
+      <button onclick="manualConfirm()">Look up &amp; confirm</button>
+    </div>`);
+  setTimeout(()=>{const i=$('#me-id');i.focus();i.addEventListener('input',()=>{const e=empById(i.value.trim());$('#me-preview').textContent=e?`${e.fullName} — ${e.department||''}`:(trPhrase('No employee with that ID.')||'No employee with that ID.');});},50);
+}
+async function manualConfirm(){
+  const id=$('#me-id').value.trim(); const e=empById(id);
+  if(!e){ toast('No employee with that ID.'); return; }
+  closeModal();
+  await validateAndRecord(id,'MANUAL_ID');
+}
+
+/* ===================================================================
+   DASHBOARD
+   =================================================================== */
+function renderDashboard(){
+  const day=$('#db-date')?$('#db-date').value:todayISO();
+  const emps=getEmployees();
+  const eligible=emps.filter(e=>CC.computeEligibility(e).eligible);
+  const meals=getMeals().filter(m=>m.status==='VALID');
+  const todays=meals.filter(m=>m.mealDate===day);
+  const servedIds=new Set(todays.map(m=>String(m.employeeId)));
+  const notServed=eligible.filter(e=>!servedIds.has(String(e.employeeId)));
+  const util=CC.utilizationRate(eligible.length, eligible.filter(e=>servedIds.has(String(e.employeeId))).length);
+  const manualCount=todays.filter(m=>m.scanMethod==='MANUAL_ID').length;
+  // billable
+  const weekAgo=new Date(Date.now()-6*864e5).toISOString().slice(0,10);
+  const monthStart=day.slice(0,8)+'01';
+  const billDay=CC.billableSum(todays);
+  const billWeek=CC.billableSum(meals.filter(m=>m.mealDate>=weekAgo&&m.mealDate<=day));
+  const billMonth=CC.billableSum(meals.filter(m=>m.mealDate>=monthStart&&m.mealDate<=day));
+  // by department
+  const byDept={}; todays.forEach(m=>{const e=empById(m.employeeId);const d=e?.department||'—';byDept[d]=(byDept[d]||0)+1;});
+  const deptRows=Object.entries(byDept).sort((a,b)=>b[1]-a[1]);
+  const maxDept=Math.max(1,...deptRows.map(r=>r[1]));
+  // by hour
+  const byHour={}; todays.forEach(m=>{const h=new Date(m.scannedAt).getHours();byHour[h]=(byHour[h]||0)+1;});
+  const hourRows=Object.entries(byHour).sort((a,b)=>a[0]-b[0]);
+
+  $('#s-dashboard').innerHTML=`
+   <div class="flex-between"><h2 style="margin:0;">Dashboard</h2>
+     <div class="date-zone"><label>Date</label><input type="date" id="db-date" value="${day}" onchange="renderDashboard()"></div>
+   </div>
+   <div class="card"><div class="kgrid">
+     ${kpi(eligible.length,'Eligible employees')}
+     ${kpi(todays.length,'Meals served ('+day+')')}
+     ${kpi(notServed.length,'Eligible not served')}
+     ${kpi(util+'%','Utilization rate')}
+     ${kpi(manualCount,'Manual entries')}
+     ${kpi(fmtMoney(billDay),'Billable today')}
+     ${kpi(fmtMoney(billWeek),'Billable 7 days')}
+     ${kpi(fmtMoney(billMonth),'Billable this month')}
+   </div></div>
+   <div class="row dash-charts">
+     <div class="card grow"><h3>Meals by department</h3>${deptRows.length?deptRows.map(([d,n])=>`
+        <div class="row" style="margin:6px 0;"><div style="width:120px;" class="small">${esc(d)}</div>
+        <div class="grow"><div class="bar" style="width:${Math.round(n/maxDept*100)}%;"></div></div><b>${n}</b></div>`).join(''):'<p class="muted small">No meals yet.</p>'}</div>
+     <div class="card grow"><h3>Meals by hour</h3>${hourRows.length?hourRows.map(([h,n])=>`
+        <div class="row" style="margin:6px 0;"><div style="width:60px;" class="small">${String(h).padStart(2,'0')}:00</div>
+        <div class="grow"><div class="bar" style="width:${Math.round(n/Math.max(1,...hourRows.map(r=>r[1]))*100)}%;"></div></div><b>${n}</b></div>`).join(''):'<p class="muted small">No meals yet.</p>'}</div>
+   </div>`;
+}
+function kpi(v,l){ return `<div class="kpi"><span class="v">${v}</span><span class="l">${esc(l)}</span></div>`; }
+
+/* ===================================================================
+   EMPLOYEES
+   =================================================================== */
+function renderEmployees(){
+  const q=($('#emp-q')?.value||'').toLowerCase();
+  const catF=$('#emp-cat')?.value||'';
+  const list=getEmployees().filter(e=>{
+    if(catF && e.sourceCategory!==catF) return false;
+    if(q && !((e.fullName||'').toLowerCase().includes(q)||String(e.employeeId).includes(q)||(e.department||'').toLowerCase().includes(q))) return false;
+    return true;
+  });
+  const cats=['','Agent','ANPE','Staff','PSIE'];
+  $('#s-employees').innerHTML=`
+   <div class="flex-between"><h2 style="margin:0;">Employees <span class="muted small">(${getEmployees().length})</span></h2></div>
+   <div class="card"><div class="row">
+     <input id="emp-q" placeholder="Search name / ID / department" value="${esc($('#emp-q')?.value||'')}" oninput="renderEmployees()" class="grow">
+     <select id="emp-cat" onchange="renderEmployees()" style="width:auto;">${cats.map(c=>`<option value="${c}" ${c===catF?'selected':''}>${c||'All categories'}</option>`).join('')}</select>
+   </div></div>
+   <div class="card"><div class="tablewrap"><table>
+     <thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Dept</th><th>Status</th><th>Access</th><th>Eligible</th><th>Badge</th><th></th></tr></thead>
+     <tbody>${list.map(e=>{const el=CC.computeEligibility(e);const b=activeBadgeOf(e.employeeId);return `<tr>
+       <td>${esc(e.employeeId)}</td><td>${esc(e.fullName)}</td>
+       <td><span class="badge ${e.sourceCategory==='Agent'?'ok':'neutral'}">${esc(e.sourceCategory||'—')}</span></td>
+       <td>${esc(e.department||'—')}</td>
+       <td>${esc(e.employmentStatus)}${e.missingFromLatestImport?' <span class="badge warn">missing</span>':''}</td>
+       <td><span class="badge ${e.accessOverride==='BLOCKED'?'no':(e.accessOverride==='ALLOWED'?'warn':'neutral')}">${esc(e.accessOverride)}</span></td>
+       <td>${el.eligible?'<span class="badge ok">Yes</span>':'<span class="badge no">No</span>'}</td>
+       <td>${b?'<span class="badge ok">active</span>':'<span class="badge neutral">none</span>'}</td>
+       <td><button class="small secondary" onclick="empDetail('${esc(e.employeeId)}')">Open</button></td></tr>`;}).join('')||'<tr><td colspan="9" class="muted">No employees. Import the staff Excel file.</td></tr>'}</tbody>
+   </table></div></div>`;
+}
+function empDetail(id){
+  const e=empById(id); if(!e)return; const el=CC.computeEligibility(e); const b=activeBadgeOf(id);
+  openModal(`<div class="flex-between"><h3 style="margin:0;">${esc(e.fullName)}</h3><span class="badge ${el.eligible?'ok':'no'}">${el.eligible?'Eligible':'Not eligible'}</span></div>
+    <p class="small muted" style="margin:4px 0 12px;">${esc(el.reason)}</p>
+    <div class="kgrid">
+      ${kpi(esc(e.employeeId),'Employee ID')}${kpi(esc(e.sourceCategory||'—'),'Category')}
+      ${kpi(esc(e.department||'—'),'Department')}${kpi(esc(e.position||'—'),'Position')}
+      ${kpi(esc(e.employmentStatus),'Status')}${kpi(esc(e.joiningDate||'—'),'Joined')}
+    </div>
+    <label>Access override</label>
+    <select id="ed-override">${['AUTO','ALLOWED','BLOCKED'].map(o=>`<option ${e.accessOverride===o?'selected':''}>${o}</option>`).join('')}</select>
+    <div class="row" style="margin-top:14px;">
+      <button onclick="saveOverride('${esc(id)}')">Save access</button>
+      ${b?`<button class="secondary" onclick="printBadges(['${esc(id)}'])">Print badge</button>
+           <button class="danger" onclick="revokeBadge('${esc(id)}')">Revoke badge</button>`
+         :`<button class="secondary" onclick="issueBadge('${esc(id)}')">Generate badge</button>`}
+      <span class="grow"></span><button class="ghost" onclick="closeModal()">Close</button>
+    </div>
+    <p class="small muted" style="margin-top:10px;">Badge: ${b?esc(b.displayTokenReference)+' · issued '+new Date(b.issuedAt).toLocaleDateString():'none'}</p>`,'wide');
+}
+async function saveOverride(id){
+  const e=empById(id); const old=e.accessOverride; e.accessOverride=$('#ed-override').value; e.updatedAt=nowISO();
+  recomputeEligibility(e);
+  if(CLOUD){ try{ await SB.from('employees').update({access_override:e.accessOverride,is_eligible:e.isEligible,eligibility_reason:e.eligibilityReason}).eq('employee_id',id); }catch(err){toast('Cloud update failed');} }
+  else saveLocal('employees');
+  await audit('ACCESS_OVERRIDE','employee',id,{accessOverride:old},{accessOverride:e.accessOverride});
+  toast('Access updated.'); closeModal(); renderEmployees();
+}
+async function issueBadge(id){ const b=issueBadgeLocal(id);
+  if(CLOUD){ const {error}=await SB.from('badges').insert({employee_id:id,token:b.token,display_token_reference:b.displayTokenReference,status:'ACTIVE'}); if(error){ state.badges=state.badges.filter(x=>x!==b); toast('❌ Badge cloud échoué : '+error.message); empDetail(id); return; } }
+  else saveLocal('badges');
+  await audit('BADGE_ISSUE','badge',id,null,{ref:b.displayTokenReference}); toast('Badge généré.'); empDetail(id); }
+async function revokeBadge(id){ const b=activeBadgeOf(id); if(!b)return; b.status='REVOKED'; b.revokedAt=nowISO(); b.revokedBy=SESSION.userId;
+  if(CLOUD){try{await SB.from('badges').update({status:'REVOKED',revoked_at:nowISO()}).eq('token',b.token);}catch(e){}} else saveLocal('badges');
+  await audit('BADGE_REVOKE','badge',id,{ref:b.displayTokenReference},null); toast('Badge revoked.'); empDetail(id); }
+
+/* ===================================================================
+   BADGES
+   =================================================================== */
+function renderBadges(){
+  const eligible=getEmployees().filter(e=>CC.computeEligibility(e).eligible);
+  const withBadge=eligible.filter(e=>activeBadgeOf(e.employeeId));
+  const without=eligible.filter(e=>!activeBadgeOf(e.employeeId));
+  $('#s-badges').innerHTML=`
+   <h2>Badges</h2>
+   <div class="card"><div class="row">
+     ${kpi(eligible.length,'Eligible')}${kpi(withBadge.length,'With active badge')}${kpi(without.length,'Missing badge')}
+     <span class="grow"></span>
+     <button onclick="generateMissingBadges()" ${without.length?'':'disabled'}>Generate ${without.length} missing</button>
+     <button class="secondary" onclick="printBadges(getEmployees().filter(e=>window.CanteenCore.computeEligibility(e).eligible&&activeBadgeOf(e.employeeId)).map(e=>e.employeeId))" ${withBadge.length?'':'disabled'}>🖨 Print all eligible</button>
+   </div></div>
+   <div class="card"><div class="tablewrap"><table>
+     <thead><tr><th>ID</th><th>Name</th><th>Dept</th><th>Badge ref</th><th>Status</th><th></th></tr></thead>
+     <tbody>${eligible.map(e=>{const b=activeBadgeOf(e.employeeId);return `<tr><td>${esc(e.employeeId)}</td><td>${esc(e.fullName)}</td><td>${esc(e.department||'—')}</td>
+       <td class="small">${b?esc(b.displayTokenReference):'—'}</td><td>${b?'<span class="badge ok">active</span>':'<span class="badge neutral">none</span>'}</td>
+       <td>${b?`<button class="small secondary" onclick="printBadges(['${esc(e.employeeId)}'])">Print</button>`:`<button class="small" onclick="issueBadge('${esc(e.employeeId)}');renderBadges();">Generate</button>`}</td></tr>`;}).join('')}</tbody>
+   </table></div></div>`;
+}
+async function generateMissingBadges(){
+  const without=getEmployees().filter(e=>CC.computeEligibility(e).eligible&&!activeBadgeOf(e.employeeId));
+  let ok=0, errs=0, lastErr='';
+  for(const e of without){ const b=issueBadgeLocal(e.employeeId);
+    if(CLOUD){ const {error}=await SB.from('badges').insert({employee_id:e.employeeId,token:b.token,display_token_reference:b.displayTokenReference,status:'ACTIVE'});
+      if(error){ errs++; lastErr=error.message; state.badges=state.badges.filter(x=>x!==b); } else ok++; }
+    else ok++; }
+  if(!CLOUD) saveLocal('badges');
+  await audit('BADGE_BULK_ISSUE','badge','*',null,{count:ok});
+  toast(errs ? ('⚠ '+ok+' générés, '+errs+' échoués : '+lastErr) : (ok+' badges générés.'));
+  renderBadges();
+}
+function printBadges(ids){
+  const area=$('#print-area'); area.innerHTML='';
+  ids.forEach(id=>{
+    const e=empById(id); const b=activeBadgeOf(id); if(!e||!b)return;
+    const wrap=document.createElement('div'); wrap.className='badge-card';
+    const qr=document.createElement('div'); qr.className='qr';
+    wrap.innerHTML=`<div class="info"><h4>${esc(e.fullName)}</h4>
+      <div class="small">ID: <b>${esc(e.employeeId)}</b></div>
+      <div class="small">${esc(e.department||'')}</div>
+      <span class="cap">CANTEEN ACCESS</span></div>`;
+    wrap.prepend(qr);
+    area.appendChild(wrap);
+    new QRCode(qr,{text:b.token,width:96,height:96,correctLevel:QRCode.CorrectLevel.M});
+  });
+  if(!area.children.length){ toast('No printable badge.'); return; }
+  setTimeout(()=>{ window.print(); audit('BADGE_PRINT','badge',ids.join(','),null,{count:ids.length}); },300);
+}
+
+/* ===================================================================
+   IMPORT (Excel)
+   =================================================================== */
+let importPreview=null;
+function renderImports(){
+  $('#s-imports').innerHTML=`
+   <h2>Import staff list (Excel)</h2>
+   <div class="card">
+     <p class="small muted">Upload the current <b>NTB Staff list</b> workbook. The app auto-detects the employee sheet by its headers (Employee ID + Staff/ANPE/PSIE), previews the changes, then imports on your confirmation.</p>
+     <input type="file" id="imp-file" accept=".xlsx,.xls" onchange="handleImportFile(event)">
+     <div id="imp-status" class="small" style="margin-top:8px;"></div>
+   </div>
+   <div id="imp-preview"></div>
+   <div class="card"><h3>Import history</h3><div class="tablewrap"><table><thead><tr><th>Date</th><th>File</th><th>New</th><th>Updated</th><th>Eligible</th></tr></thead>
+     <tbody>${(state.imports||[]).map(i=>`<tr><td class="small">${new Date(i.createdAt).toLocaleString()}</td><td>${esc(i.fileName||'')}</td><td>${i.stats?.newEmployees||0}</td><td>${i.stats?.updated||0}</td><td>${i.stats?.eligibleAgents||0}</td></tr>`).join('')||'<tr><td colspan="5" class="muted">No imports yet.</td></tr>'}</tbody></table></div></div>`;
+}
+async function handleImportFile(ev){
+  const file=ev.target.files[0]; if(!file)return;
+  $('#imp-status').textContent='Reading workbook…';
+  try{
+    const buf=await file.arrayBuffer();
+    const wb=new ExcelJS.Workbook(); await wb.xlsx.load(buf);
+    // build metadata for each sheet (name, header, hidden state, data-row count)
+    const sheets=[]; const exitIds=[];
+    wb.eachSheet(ws=>{
+      const header=[]; const r1=ws.getRow(1);
+      r1.eachCell({includeEmpty:true},(c,col)=>{header[col-1]=cellText(c);});
+      sheets.push({name:ws.name, ws, headerRow:header, hidden:(ws.state&&ws.state!=='visible'), rows:ws.actualRowCount||ws.rowCount||0});
+    });
+    // Candidate = has staff headers, NOT hidden, NOT an exit/entries/dashboard helper sheet.
+    const isHelper=n=>/exit|entr(y|ies)|dashboard|total|operator|sheet\d+/i.test(n);
+    let cands=sheets.filter(s=>CC.isStaffHeader(s.headerRow)&&!s.hidden&&!isHelper(s.name));
+    if(!cands.length) cands=sheets.filter(s=>CC.isStaffHeader(s.headerRow)&&!s.hidden);
+    if(!cands.length) cands=sheets.filter(s=>CC.isStaffHeader(s.headerRow));
+    if(!cands.length){ $('#imp-status').textContent='❌ Could not find an employee sheet (need Employee ID + Staff/ANPE/PSIE headers).'; return; }
+    // Among candidates pick the one with the most data rows (the master staff list).
+    cands.sort((a,b)=>b.rows-a.rows);
+    const staffSheet=cands[0];
+    const staff={ name:staffSheet.name, colMap:CC.buildColumnMap(staffSheet.headerRow) };
+    // collect exit IDs from any sheet whose name contains "exit"
+    sheets.filter(s=>/exit/i.test(s.name)).forEach(s=>{
+      const m=CC.buildColumnMap(s.headerRow); if(m.employeeId===undefined)return;
+      s.ws.eachRow((row,rn)=>{ if(rn===1)return; const v=row.getCell(m.employeeId+1); const id=cellText(v).trim(); if(id)exitIds.push(id); });
+    });
+    // parse staff rows
+    const incoming=[]; const cmap=staff.colMap;
+    staffSheet.ws.eachRow((row,rn)=>{
+      if(rn===1)return;
+      const vals=[]; row.eachCell({includeEmpty:true},(c,col)=>{vals[col-1]=cellRaw(c);});
+      // skip fully empty
+      if(!vals.some(v=>v!==undefined&&v!==null&&String(v).trim()!=='')) return;
+      incoming.push(CC.parseEmployeeRow(vals,cmap));
+    });
+    const diff=CC.diffImport(getEmployees(),incoming,exitIds);
+    importPreview={ fileName:file.name, sheetName:staff.name, incoming, diff, exitIds };
+    $('#imp-status').innerHTML=`✅ Sheet detected: <b>${esc(staff.name)}</b> · ${incoming.length} rows · ${exitIds.length} exit IDs`;
+    translateDOM($('#imp-status'));
+    renderImportPreview();
+  }catch(e){ $('#imp-status').textContent='❌ Import failed: '+(e.message||e); }
+}
+function cellText(cell){ return cell?String(cell.text??cell.value??'').trim():''; }
+function cellRaw(cell){ if(!cell)return ''; let v=cell.value; if(v&&typeof v==='object'){ if(v.text)return v.text; if(v.result!=null)return v.result; if(v instanceof Date)return v.toISOString().slice(0,10); if(v.richText)return v.richText.map(t=>t.text).join(''); } return v; }
+function renderImportPreview(){
+  const s=importPreview.diff.stats;
+  $('#imp-preview').innerHTML=`
+   <div class="card solid"><div class="flex-between"><h3 style="margin:0;">Preview — confirm to apply</h3>
+     <div class="row"><button class="secondary" onclick="importPreview=null;renderImports();">Cancel</button>
+     <button onclick="confirmImport()">✔ Confirm import</button></div></div>
+   <div class="kgrid" style="margin-top:12px;">
+     ${kpi(s.totalRows,'Rows read')}${kpi(s.newEmployees,'New')}${kpi(s.updated,'Updated')}${kpi(s.unchanged,'Unchanged')}
+     ${kpi(s.eligibleAgents,'Eligible Agents')}${kpi(s.newlyEligible,'Newly eligible')}${kpi(s.lostEligibility,'Lost eligibility')}
+     ${kpi(s.duplicatesInFile,'Duplicates in file')}${kpi(s.invalidRows,'Invalid rows')}${kpi(s.missingFromImport,'Missing from file')}
+   </div>
+   ${s.invalidRows?`<p class="small" style="color:var(--warn);margin-top:10px;">${s.invalidRows} row(s) skipped for missing Employee ID.</p>`:''}
+   ${s.duplicatesInFile?`<p class="small" style="color:var(--warn);">Duplicate IDs in file: ${importPreview.diff.duplicateIds.slice(0,10).map(esc).join(', ')}${importPreview.diff.duplicateIds.length>10?'…':''}</p>`:''}
+   </div>`;
+  translateDOM($('#imp-preview'));
+}
+async function confirmImport(){
+  const {diff,fileName}=importPreview;
+  const importId=uid();
+  // apply atomically to a copy, then commit
+  const byId={}; getEmployees().forEach(e=>byId[String(e.employeeId)]=e);
+  diff.rows.forEach(r=>{
+    const e=r.employee; e.lastImportId=importId; e.missingFromLatestImport=false; e.updatedAt=nowISO();
+    recomputeEligibility(e);
+    const prev=byId[String(e.employeeId)];
+    if(prev){ Object.assign(prev,e); } else { byId[String(e.employeeId)]=e; state.employees.push(e); if(!prev)e.createdAt=nowISO(); }
+  });
+  // mark missing
+  diff.missingIds.forEach(id=>{ const e=byId[String(id)]; if(e)e.missingFromLatestImport=true; });
+  const impRec={ id:importId, fileName, stats:diff.stats, createdAt:nowISO() };
+  state.imports.unshift(impRec);
+  if(CLOUD){
+    // NB: supabase-js returns {error} instead of throwing — must check it.
+    const rows=diff.rows.map(r=>mapEmpToDb(r.employee, importId));
+    const up=await SB.from('employees').upsert(rows,{onConflict:'employee_id'});
+    if(up.error){ toast('❌ Écriture cloud échouée : '+up.error.message); importPreview=null; renderImports(); return; }
+    await SB.from('employee_imports').insert({file_name:fileName,stats:diff.stats});
+    await audit('IMPORT_CONFIRM','import',importId,null,diff.stats);
+    importPreview=null;
+    await cloudLoadAll();          // resync state from the database
+    toast('✅ Import cloud : '+diff.stats.newEmployees+' nouveaux, '+diff.stats.updated+' mis à jour.');
+    renderImports();
+    return;
+  }
+  saveLocal('employees'); saveLocal('imports');
+  await audit('IMPORT_CONFIRM','import',importId,null,diff.stats);
+  toast('Import applied: '+diff.stats.newEmployees+' new, '+diff.stats.updated+' updated.');
+  importPreview=null; renderImports();
+}
+
+/* ===================================================================
+   REPORTS (Excel export)
+   =================================================================== */
+function renderReports(){
+  const from=$('#rp-from')?.value||todayISO(), to=$('#rp-to')?.value||todayISO();
+  const meals=getMeals().filter(m=>m.mealDate>=from&&m.mealDate<=to);
+  const valid=meals.filter(m=>m.status==='VALID');
+  $('#s-reports').innerHTML=`
+   <h2>Reports</h2>
+   <div class="card"><div class="row">
+     <div><label>From</label><input type="date" id="rp-from" value="${from}" onchange="renderReports()"></div>
+     <div><label>To</label><input type="date" id="rp-to" value="${to}" onchange="renderReports()"></div>
+   </div></div>
+   <div class="card"><div class="kgrid">
+     ${kpi(valid.length,'Valid meals')}${kpi(meals.length-valid.length,'Cancelled')}
+     ${kpi(fmtMoney(CC.billableSum(valid)),'Billable amount')}
+     ${kpi(valid.filter(m=>m.scanMethod==='MANUAL_ID').length,'Manual entries')}
+   </div>
+   <div class="row" style="margin-top:14px;">
+     <button onclick="exportDaily('${from}','${to}')">⬇ Daily report</button>
+     <button class="secondary" onclick="exportProvider('${from}','${to}')">⬇ Provider summary</button>
+     <button class="secondary" onclick="exportEligible()">⬇ Eligible list</button>
+     <button class="secondary" onclick="exportExceptions('${from}','${to}')">⬇ Exceptions</button>
+   </div></div>`;
+}
+function svcLabel(id){ const s=state.services.find(x=>x.id===id); return s?s.label:id; }
+async function xlsxDownload(wb,name){ const buf=await wb.xlsx.writeBuffer(); const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); await audit('EXPORT_REPORT','report',name); }
+function styleHeader(ws){ ws.getRow(1).eachCell(c=>{c.font={bold:true,color:{argb:'FFFFFFFF'}};c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF1F6B2B'}};}); ws.getRow(1).height=20; }
+async function exportDaily(from,to){
+  const wb=new ExcelJS.Workbook(); const ws=wb.addWorksheet('Daily meals');
+  ws.columns=[{header:'Date',width:12},{header:'Service',width:12},{header:'Employee ID',width:14},{header:'Full Name',width:26},{header:'Department',width:16},{header:'Category',width:12},{header:'Time',width:10},{header:'Method',width:12},{header:'Scanner',width:16},{header:'Unit Price',width:12},{header:'Status',width:12},{header:'Cancel reason',width:24}];
+  getMeals().filter(m=>m.mealDate>=from&&m.mealDate<=to).forEach(m=>{const e=empById(m.employeeId)||{};
+    ws.addRow([m.mealDate,svcLabel(m.mealServiceId),m.employeeId,e.fullName||'',e.department||'',m.sourceCategoryAtScan||e.sourceCategory||'',new Date(m.scannedAt).toLocaleTimeString('fr-FR'),m.scanMethod,m.scannerUserId||'',Number(m.unitPrice)||0,m.status,m.cancelReason||'']);});
+  styleHeader(ws); await xlsxDownload(wb,`NTB_Canteen_Daily_${from}_${to}.xlsx`);
+}
+async function exportProvider(from,to){
+  const wb=new ExcelJS.Workbook(); const ws=wb.addWorksheet('Provider summary');
+  ws.columns=[{header:'Date',width:12},{header:'Service',width:12},{header:'Valid meals',width:12},{header:'Cancelled',width:12},{header:'Unit Price',width:12},{header:'Gross',width:14},{header:'Adjustment',width:12},{header:'Net billable',width:16}];
+  const groups={};
+  getMeals().filter(m=>m.mealDate>=from&&m.mealDate<=to).forEach(m=>{const k=m.mealDate+'|'+m.mealServiceId;(groups[k]=groups[k]||[]).push(m);});
+  let tot=0;
+  Object.keys(groups).sort().forEach(k=>{const [d,s]=k.split('|');const arr=groups[k];const valid=arr.filter(m=>m.status==='VALID');const price=valid[0]?Number(valid[0].unitPrice):currentPrice(d);const gross=CC.billableSum(valid);tot+=gross;
+    ws.addRow([d,svcLabel(s),valid.length,arr.length-valid.length,price,gross,0,gross]);});
+  ws.addRow([]); const tr=ws.addRow(['','','','','TOTAL','',' ',tot]); tr.font={bold:true};
+  styleHeader(ws); await xlsxDownload(wb,`NTB_Canteen_Provider_${from}_${to}.xlsx`);
+}
+async function exportEligible(){
+  const wb=new ExcelJS.Workbook(); const ws=wb.addWorksheet('Eligible employees');
+  ws.columns=[{header:'Employee ID',width:14},{header:'Name',width:26},{header:'Department',width:16},{header:'Category',width:12},{header:'Access',width:10},{header:'Badge',width:14},{header:'Badge status',width:12}];
+  getEmployees().filter(e=>CC.computeEligibility(e).eligible).forEach(e=>{const b=activeBadgeOf(e.employeeId);ws.addRow([e.employeeId,e.fullName,e.department||'',e.sourceCategory,e.accessOverride,b?b.displayTokenReference:'',b?'active':'none']);});
+  styleHeader(ws); await xlsxDownload(wb,`NTB_Canteen_Eligible.xlsx`);
+}
+async function exportExceptions(from,to){
+  const wb=new ExcelJS.Workbook(); const ws=wb.addWorksheet('Exceptions');
+  ws.columns=[{header:'Type',width:20},{header:'Date',width:12},{header:'Employee ID',width:14},{header:'Detail',width:40}];
+  getMeals().filter(m=>m.mealDate>=from&&m.mealDate<=to&&m.status==='CANCELLED').forEach(m=>ws.addRow(['Cancelled meal',m.mealDate,m.employeeId,m.cancelReason||'']));
+  getMeals().filter(m=>m.mealDate>=from&&m.mealDate<=to&&m.scanMethod==='MANUAL_ID').forEach(m=>ws.addRow(['Manual entry',m.mealDate,m.employeeId,'']));
+  (state.audit||[]).filter(a=>a.action==='SCAN_DENIED').forEach(a=>ws.addRow(['Denied access',(a.createdAt||'').slice(0,10),a.entityId,JSON.stringify(a.newValue||{})]));
+  styleHeader(ws); await xlsxDownload(wb,`NTB_Canteen_Exceptions_${from}_${to}.xlsx`);
+}
+
+/* ===================================================================
+   SETTINGS
+   =================================================================== */
+async function resetLocalData(){
+  const msg=trPhrase('Reset local data on this device? You will be logged out. Cloud data is NOT affected.')||'Reset local data on this device? You will be logged out. Cloud data is NOT affected.';
+  if(!confirm(msg)) return;
+  try{ const regs=await navigator.serviceWorker.getRegistrations(); for(const r of regs) await r.unregister(); }catch(e){}
+  try{ for(const k of await caches.keys()) await caches.delete(k); }catch(e){}
+  try{ localStorage.clear(); sessionStorage.clear(); }catch(e){}
+  location.reload();
+}
+async function deleteCloudData(){
+  if(!CLOUD){ toast('Cloud not configured.'); return; }
+  if(!SESSION || SESSION.role!=='HR_ADMIN'){ toast('Not permitted for your role.'); return; }
+  const kw = LANG==='fr' ? 'SUPPRIMER' : 'DELETE';
+  const msg = LANG==='fr'
+    ? 'Ceci supprime DÉFINITIVEMENT toutes les données cloud (employés, badges, repas). Tapez '+kw+' pour confirmer.'
+    : 'This permanently deletes ALL cloud data (employees, badges, meals). Type '+kw+' to confirm.';
+  const typed=prompt(msg);
+  if((typed||'').trim().toUpperCase()!==kw){ toast(LANG==='fr'?'Annulé.':'Cancelled.'); return; }
+  const {error}=await SB.rpc('reset_canteen_data');
+  if(error){ toast('❌ '+error.message); return; }
+  await audit('CLOUD_DATA_RESET','system','*',null,null);
+  await cloudLoadAll();
+  toast(LANG==='fr'?'✅ Données cloud supprimées.':'✅ Cloud data deleted.');
+  renderSettings();
+}
+function renderSettings(){
+  const isAdmin = SESSION.role==='HR_ADMIN';
+  const dataCard = `
+   <div class="card"><h3>Data</h3>
+     <p class="small muted">Clears the cache on this device and reloads the latest version. Cloud data is not affected.</p>
+     <button class="secondary" onclick="resetLocalData()">↺ Reset local data</button>
+     ${isAdmin && CLOUD ? `<hr style="border:none;border-top:1px solid var(--border-2);margin:16px 0;">
+       <p class="small" style="color:var(--danger);">Danger zone: permanently delete ALL cloud data (employees, badges, meals). Cannot be undone.</p>
+       <button class="danger" onclick="deleteCloudData()">🗑 Delete cloud data</button>` : ''}
+   </div>`;
+  const prefCard=`
+   <div class="card"><h3>Preferences</h3>
+     <div class="row" style="gap:28px;align-items:flex-start;">
+       <div><label style="margin-top:0;">Language</label>
+         <span class="lang-toggle">
+           <button class="lang-btn" data-lang="fr" onclick="setLang('fr')">FR</button>
+           <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+         </span>
+       </div>
+       <div><label style="margin-top:0;">Text size</label>
+         <div class="scale-row" style="justify-content:flex-start;">
+           <span class="lang-toggle">
+             <button class="lang-btn" onclick="stepScale(-1)" title="Smaller text">A−</button>
+             <button class="lang-btn" onclick="stepScale(1)" title="Larger text">A+</button>
+           </span>
+           <span id="scale-val" class="small muted">${UISCALE}%</span>
+         </div>
+       </div>
+       <div><label style="margin-top:0;">Theme</label>
+         <span class="lang-toggle">
+           <button class="lang-btn" data-theme="auto" onclick="setTheme('auto')">Auto</button>
+           <button class="lang-btn" data-theme="light" onclick="setTheme('light')">Light</button>
+           <button class="lang-btn" data-theme="dark" onclick="setTheme('dark')">Dark</button>
+         </span>
+       </div>
+       <div><label style="margin-top:0;">Install</label>
+         <button class="secondary" onclick="doInstall()">⬇ Install app</button>
+       </div>
+     </div></div>`;
+  const adminCards = !isAdmin ? '' : `
+   <div class="card"><h3>Meal service</h3><p class="small muted">Lunch is the only meal service served.</p>
+     <table><thead><tr><th>Service</th><th>Active</th></tr></thead><tbody>
+     ${state.services.map(s=>`<tr><td>${esc(s.label)}</td><td><input type="checkbox" style="width:auto;" ${s.isActive?'checked':''} onchange="toggleService('${s.id}',this.checked)"></td></tr>`).join('')}
+     </tbody></table></div>
+   <div class="card"><h3>Meal price (versioned)</h3>
+     <p class="small muted">Adding a new price keeps the old one for historical reports. Current: <b>${fmtMoney(currentPrice())}</b></p>
+     <div class="row">
+       <div><label>Amount (FCFA)</label><input type="number" id="pr-amt" value="${currentPrice()}"></div>
+       <div><label>Effective from</label><input type="date" id="pr-from" value="${todayISO()}"></div>
+       <button style="align-self:flex-end;" onclick="addPrice()">Add price</button>
+     </div>
+     <div class="tablewrap" style="margin-top:10px;max-height:200px;"><table><thead><tr><th>From</th><th>To</th><th>Amount</th></tr></thead>
+       <tbody>${state.prices.slice().sort((a,b)=>b.effectiveFrom.localeCompare(a.effectiveFrom)).map(p=>`<tr><td>${p.effectiveFrom}</td><td>${p.effectiveTo||'—'}</td><td>${fmtMoney(p.amount)}</td></tr>`).join('')}</tbody></table></div>
+   </div>
+   <div class="card"><h3>Food providers</h3>
+     <div class="row"><input id="pv-name" placeholder="Provider name" class="grow"><input id="pv-contact" placeholder="Contact" class="grow"><button onclick="addProvider()">Add</button></div>
+     <div class="tablewrap" style="margin-top:10px;"><table><thead><tr><th>Name</th><th>Contact</th><th>Status</th></tr></thead>
+       <tbody>${state.providers.map(p=>`<tr><td>${esc(p.name)}</td><td>${esc(p.contact||'')}</td><td>${esc(p.status)}</td></tr>`).join('')||'<tr><td colspan=3 class="muted">None</td></tr>'}</tbody></table></div>
+   </div>`;
+  $('#s-settings').innerHTML=`<h2>Settings</h2>${prefCard}${dataCard}${adminCards}`;
+  $$('#s-settings .lang-btn[data-lang]').forEach(b=>b.classList.toggle('on',b.dataset.lang===LANG));
+  $$('#s-settings .lang-btn[data-theme]').forEach(b=>b.classList.toggle('on',b.dataset.theme===THEME));
+}
+async function toggleService(id,on){ const s=state.services.find(x=>x.id===id); s.isActive=on; if(CLOUD){try{await SB.from('meal_services').update({is_active:on}).eq('id',id);}catch(e){}} else saveLocal('services'); await audit('SERVICE_TOGGLE','service',id,null,{active:on}); toast('Saved.'); }
+async function addPrice(){ const amt=Number($('#pr-amt').value)||0; const from=$('#pr-from').value||todayISO();
+  // close previous open price
+  state.prices.filter(p=>!p.effectiveTo).forEach(p=>{ const d=new Date(from);d.setDate(d.getDate()-1);p.effectiveTo=d.toISOString().slice(0,10); });
+  const rec={id:uid(),amount:amt,currency:'XOF',effectiveFrom:from,effectiveTo:null,changedBy:SESSION.userId,createdAt:nowISO()};
+  state.prices.push(rec); if(CLOUD){try{await SB.from('meal_prices').insert({amount:amt,effective_from:from});}catch(e){}} else saveLocal('prices');
+  await audit('PRICE_CHANGE','price',rec.id,null,{amount:amt,from}); toast('Price added.'); renderSettings(); }
+async function addProvider(){ const name=$('#pv-name').value.trim(); if(!name)return; const rec={id:uid(),name,contact:$('#pv-contact').value.trim(),status:'ACTIVE',createdAt:nowISO()}; state.providers.push(rec); if(CLOUD){try{await SB.from('providers').insert({name:rec.name,contact:rec.contact});}catch(e){}} else saveLocal('providers'); await audit('PROVIDER_ADD','provider',rec.id,null,rec); toast('Provider added.'); renderSettings(); }
+
+/* ===================================================================
+   USERS (local mode management)
+   =================================================================== */
+function renderUsers(){
+  if(CLOUD){ $('#s-users').innerHTML=`<h2>Users</h2><div class="card"><p>In cloud mode, create users in the <b>Supabase dashboard</b> (Authentication → Users), then set their role in the <code>profiles</code> table:</p><pre style="background:rgba(0,0,0,.05);padding:10px;border-radius:8px;overflow:auto;">update profiles set role='HR_ADMIN' where email='person@novarea.com';</pre></div>`; return; }
+  $('#s-users').innerHTML=`
+   <h2>Users</h2>
+   <div class="card"><h3>Add user</h3><div class="row">
+     <input id="us-user" placeholder="username" class="grow"><input id="us-name" placeholder="full name" class="grow">
+     <select id="us-role" style="width:auto;">${Object.keys(ROLES).map(r=>`<option value="${r}">${ROLES[r]}</option>`).join('')}</select>
+     <input id="us-pass" placeholder="password" class="grow"><button onclick="addUser()">Add</button>
+   </div></div>
+   <div class="card"><div class="tablewrap"><table><thead><tr><th>Username</th><th>Name</th><th>Role</th><th></th></tr></thead>
+     <tbody>${state.users.map(u=>`<tr><td>${esc(u.username)}</td><td>${esc(u.name)}</td><td>${ROLES[u.role]}</td>
+       <td><button class="small secondary" onclick="resetPass('${u.id}')">Reset password</button> ${u.username!=='admin'?`<button class="small danger" onclick="delUser('${u.id}')">Delete</button>`:''}</td></tr>`).join('')}</tbody></table></div></div>`;
+}
+async function addUser(){ const u=$('#us-user').value.trim(); if(!u)return; if(state.users.find(x=>x.username===u)){toast('Username exists');return;}
+  const rec={id:uid(),username:u,name:$('#us-name').value.trim()||u,role:$('#us-role').value,passHash:await sha256(($('#us-pass').value||'changeme')+'::ntbc')};
+  state.users.push(rec); saveLocal('users'); await audit('USER_CREATE','user',rec.id,null,{username:u,role:rec.role}); toast('User added.'); renderUsers(); }
+async function resetPass(id){ const p=prompt('New password:'); if(!p)return; const u=state.users.find(x=>x.id===id); u.passHash=await sha256(p+'::ntbc'); saveLocal('users'); await audit('USER_UPDATE','user',id,null,{reset:true}); toast('Password reset.'); }
+async function delUser(id){ const u=state.users.find(x=>x.id===id); if(!confirm('Delete '+u.username+'?'))return; state.users=state.users.filter(x=>x.id!==id); saveLocal('users'); await audit('USER_DELETE','user',id,{username:u.username},null); renderUsers(); }
+
+/* ===================================================================
+   AUDIT
+   =================================================================== */
+async function renderAudit(){
+  let logs=state.audit||[];
+  if(CLOUD){ try{ const {data}=await SB.from('audit_log').select('*').order('created_at',{ascending:false}).limit(300); logs=(data||[]).map(a=>({action:a.action,entity:a.entity,entityId:a.entity_id,userEmail:a.user_email,createdAt:a.created_at,newValue:a.new_value})); }catch(e){} }
+  $('#s-audit').innerHTML=`<h2>Audit log</h2>
+   <div class="card"><div class="tablewrap"><table><thead><tr><th>When</th><th>User</th><th>Action</th><th>Entity</th><th>Detail</th></tr></thead>
+     <tbody>${logs.slice(0,300).map(a=>`<tr><td class="small">${new Date(a.createdAt).toLocaleString()}</td><td>${esc(a.userEmail||'')}</td><td><span class="badge neutral">${esc(a.action)}</span></td><td class="small">${esc(a.entity||'')} ${esc(a.entityId||'')}</td><td class="small muted">${esc(JSON.stringify(a.newValue||a.oldValue||'').slice(0,80))}</td></tr>`).join('')||'<tr><td colspan=5 class="muted">No events.</td></tr>'}</tbody></table></div></div>`;
+}
+
+/* ===================================================================
+   TESTS
+   =================================================================== */
+function renderTests(){
+  $('#s-tests').innerHTML=`<h2>Automated tests</h2>
+   <div class="card"><p class="small muted">Runs the real unit tests (eligibility, one-meal rule, billing, import mapping) in this browser.</p>
+     <button onclick="runTests()">▶ Run tests</button><div id="test-out" style="margin-top:14px;"></div></div>`;
+}
+function runTests(){
+  const r=window.CanteenTests.run();
+  $('#test-out').innerHTML=`<div class="kgrid"><div class="kpi"><span class="v" style="color:${r.failed?'var(--danger)':'var(--ok)'}">${r.passed}/${r.total}</span><span class="l">passed</span></div>${r.failed?`<div class="kpi"><span class="v" style="color:var(--danger)">${r.failed}</span><span class="l">failed</span></div>`:''}</div>
+   <div class="tablewrap" style="margin-top:12px;"><table><thead><tr><th></th><th>Test</th><th>Detail</th></tr></thead>
+   <tbody>${r.results.map(t=>`<tr><td>${t.pass?'<span class="badge ok">PASS</span>':'<span class="badge no">FAIL</span>'}</td><td>${esc(t.name)}</td><td class="small muted">${t.pass?'':esc(t.detail)}</td></tr>`).join('')}</tbody></table></div>`;
+  translateDOM($('#test-out'));
+}
+
+/* ===================================================================
+   CLOUD helpers (mappers + load)
+   =================================================================== */
+function _dOrNull(v){ v=v==null?'':String(v); const m=v.match(/^\d{4}-\d{2}-\d{2}/); return m?v.slice(0,10):null; }
+function mapEmpToDb(e,importId){ return {
+  employee_id:String(e.employeeId), full_name:e.fullName||String(e.employeeId),
+  department:e.department||null, position:e.position||null, gender:e.gender||null,
+  source_category:e.sourceCategory||null, employment_status:e.employmentStatus||'Active',
+  joining_date:_dOrNull(e.joiningDate), contract_type:e.contractType||null,
+  contract_start:_dOrNull(e.contractStart), contract_end:_dOrNull(e.contractEnd),
+  access_override:e.accessOverride||'AUTO', is_eligible:!!e.isEligible,
+  eligibility_reason:e.eligibilityReason||null, missing_from_latest_import:!!e.missingFromLatestImport,
+  last_import_id:null }; }
+function mapEmpFromDb(r){ return { employeeId:r.employee_id, fullName:r.full_name, department:r.department, position:r.position, gender:r.gender, sourceCategory:r.source_category, employmentStatus:r.employment_status, joiningDate:r.joining_date, contractType:r.contract_type, contractStart:r.contract_start, contractEnd:r.contract_end, accessOverride:r.access_override, isEligible:r.is_eligible, eligibilityReason:r.eligibility_reason, missingFromLatestImport:r.missing_from_latest_import, valid:true }; }
+function mapMealToDb(m){ return { employee_id:m.employeeId, meal_date:m.mealDate, meal_service_id:m.mealServiceId, scanned_at:m.scannedAt, scanner_user_id:m.scannerUserId, scanner_session_id:m.scannerSessionId, scan_method:m.scanMethod, eligibility_status_at_scan:m.eligibilityStatusAtScan, source_category_at_scan:m.sourceCategoryAtScan, unit_price_at_scan:m.unitPrice, status:m.status }; }
+function mapMealFromDb(r){ return { id:r.id, employeeId:r.employee_id, mealDate:r.meal_date, mealServiceId:r.meal_service_id, scannedAt:r.scanned_at, scannerUserId:r.scanner_user_id, scanMethod:r.scan_method, eligibilityStatusAtScan:r.eligibility_status_at_scan, sourceCategoryAtScan:r.source_category_at_scan, unitPrice:r.unit_price_at_scan, status:r.status, cancelReason:r.cancel_reason }; }
+let _mealChannel=null;
+async function cloudLoadAll(){
+  try{
+    const [emps,badges,meals,services,prices,providers]=await Promise.all([
+      SB.from('employees').select('*'), SB.from('badges').select('*'),
+      SB.from('meal_records').select('*').gte('meal_date',new Date(Date.now()-60*864e5).toISOString().slice(0,10)),
+      SB.from('meal_services').select('*'), SB.from('meal_prices').select('*'), SB.from('providers').select('*')
+    ]);
+    state.employees=(emps.data||[]).map(mapEmpFromDb);
+    state.badges=(badges.data||[]).map(b=>({id:b.id,employeeId:b.employee_id,token:b.token,displayTokenReference:b.display_token_reference,status:b.status,issuedAt:b.issued_at,revokedAt:b.revoked_at}));
+    state.meals=(meals.data||[]).map(mapMealFromDb);
+    if(services.data&&services.data.length) state.services=services.data.map(s=>({id:s.id,label:s.label,isActive:s.is_active}));
+    state.prices=(prices.data||[]).map(p=>({id:p.id,amount:p.amount,currency:p.currency,effectiveFrom:p.effective_from,effectiveTo:p.effective_to}));
+    state.providers=(providers.data||[]).map(p=>({id:p.id,name:p.name,contact:p.contact,status:p.status}));
+    if(CURRENT) showSection(CURRENT);
+  }catch(e){ toast('Cloud load failed: '+(e.message||e)); }
+  // realtime meals — subscribe ONCE, in its own guarded block so a realtime
+  // hiccup never breaks the data load or shows an error toast.
+  try{
+    if(!_mealChannel){
+      _mealChannel = SB.channel('meals')
+        .on('postgres_changes',{event:'*',schema:'public',table:'meal_records'}, ()=>{
+          SB.from('meal_records').select('*').gte('meal_date',todayISO()).then(({data})=>{
+            if(data){ const others=state.meals.filter(m=>m.mealDate<todayISO()); state.meals=others.concat(data.map(mapMealFromDb)); if(CURRENT==='dashboard')renderDashboard(); }
+          });
+        })
+        .subscribe();
+    }
+  }catch(e){ /* realtime optional */ }
+}
+
+/* ---------- modal + install ---------- */
+function openModal(html,cls){ $('#modal').className='modal glass'+(cls?' '+cls:''); $('#modal').innerHTML=html; $('#modal-bg').classList.add('on'); translateDOM($('#modal')); }
+function closeModal(){ $('#modal-bg').classList.remove('on'); }
+$('#modal-bg').addEventListener('click',e=>{ if(e.target.id==='modal-bg')closeModal(); });
+async function doInstall(){
+  if(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches){ toast('App already installed.'); return; }
+  const p=window._deferredPrompt;
+  if(p){ p.prompt(); await p.userChoice; window._deferredPrompt=null; const b=$('#installBtn'); if(b) b.style.display='none'; return; }
+  // No native prompt available -> show clear per-platform steps.
+  openModal(`<h3>Install the app</h3>
+    <p class="small">Android (Chrome): open the browser menu (⋮, top right) and tap "Install app".</p>
+    <p class="small">iPhone (Safari): tap the Share button and "Add to Home Screen".</p>
+    <p class="small">Computer (Chrome/Edge): click the install icon at the right of the address bar.</p>
+    <p class="small muted">If you don't see the option, the app is probably already installed.</p>
+    <div class="row" style="justify-content:flex-end;margin-top:12px;"><button onclick="closeModal()">OK</button></div>`);
+}
+</script>
+</body>
+</html>
