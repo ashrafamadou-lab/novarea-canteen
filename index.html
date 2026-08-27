@@ -183,6 +183,8 @@ th{color:var(--ink-2);font-size:.78rem;text-transform:uppercase;letter-spacing:.
 .id-card .sig{padding:9px 16px 12px;text-align:center;}
 .id-card .sig .line{border-top:1px solid #b9c9bf;margin:0 auto 3px;width:70%;}
 .id-card .sig .lbl{font-size:.6rem;color:#8a9a90;letter-spacing:.03em;}
+.emp-photo{width:72px;height:72px;border-radius:50%;background:var(--green-bg);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--green-dark);border:2px solid var(--green);overflow:hidden;flex-shrink:0;font-size:1.3rem;}
+.emp-photo img{width:100%;height:100%;object-fit:cover;}
 @media print{
   body *{visibility:hidden;} #print-area,#print-area *{visibility:visible;}
   #print-area{position:absolute!important;left:0!important;top:0!important;width:100%;}
@@ -933,6 +935,16 @@ function empDetail(id){
       ${kpi(esc(e.department||'—'),'Department')}${kpi(esc(e.position||'—'),'Position')}
       ${kpi(esc(e.employmentStatus),'Status')}${kpi(esc(e.joiningDate||'—'),'Joined')}
     </div>
+    <div class="row" style="align-items:center;gap:14px;margin:8px 0 4px;">
+      <div class="emp-photo">${e.photo?`<img src="${esc(e.photo)}" alt="">`:esc(((e.fullName||'?').trim().split(/\s+/).slice(0,2).map(s=>s[0]).join('')||'?').toUpperCase())}</div>
+      <div><label style="margin-top:0;">Photo</label>
+        <div class="row" style="gap:8px;">
+          <label class="btn secondary small" style="cursor:pointer;margin:0;">📷 Upload photo<input type="file" accept="image/*" style="display:none" onchange="uploadPhoto('${esc(id)}',this.files[0])"></label>
+          ${e.photo?`<button class="small danger" onclick="removePhoto('${esc(id)}')">Remove</button>`:''}
+        </div>
+        <div class="small muted" style="margin-top:4px;">Appears on the printed badge.</div>
+      </div>
+    </div>
     <label>Access override</label>
     <select id="ed-override">${['AUTO','ALLOWED','BLOCKED'].map(o=>`<option ${e.accessOverride===o?'selected':''}>${o}</option>`).join('')}</select>
     <div class="row" style="margin-top:14px;">
@@ -943,6 +955,29 @@ function empDetail(id){
       <span class="grow"></span><button class="ghost" onclick="closeModal()">Close</button>
     </div>
     <p class="small muted" style="margin-top:10px;">Badge: ${b?esc(b.displayTokenReference)+' · issued '+new Date(b.issuedAt).toLocaleDateString():'none'}</p>`,'wide');
+}
+function resizeImage(file,size){
+  return new Promise((res,rej)=>{
+    const img=new Image(); const url=URL.createObjectURL(file);
+    img.onload=()=>{ const c=document.createElement('canvas'); c.width=size;c.height=size; const ctx=c.getContext('2d');
+      const s=Math.min(img.naturalWidth,img.naturalHeight); const sx=(img.naturalWidth-s)/2, sy=(img.naturalHeight-s)/2;
+      ctx.drawImage(img,sx,sy,s,s,0,0,size,size); URL.revokeObjectURL(url); res(c.toDataURL('image/jpeg',0.82)); };
+    img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('bad image'));}; img.src=url;
+  });
+}
+async function uploadPhoto(id,file){
+  if(!file){return;} if(!/^image\//.test(file.type)){ toast('Choisis une image.'); return; }
+  let dataURI; try{ dataURI=await resizeImage(file,256); }catch(e){ toast('Image illisible.'); return; }
+  const e=empById(id); if(!e)return; e.photo=dataURI;
+  if(CLOUD){ const {error}=await SB.from('employees').update({photo:dataURI}).eq('employee_id',id); if(error){ toast('❌ Photo cloud : '+error.message); return; } }
+  else saveLocal('employees');
+  await audit('EMP_PHOTO','employee',id,null,{set:true}); toast('Photo enregistrée.'); empDetail(id);
+}
+async function removePhoto(id){
+  const e=empById(id); if(!e)return; e.photo=null;
+  if(CLOUD){ const {error}=await SB.from('employees').update({photo:null}).eq('employee_id',id); if(error){ toast('❌ '+error.message); return; } }
+  else saveLocal('employees');
+  await audit('EMP_PHOTO','employee',id,null,{set:false}); toast('Photo retirée.'); empDetail(id);
 }
 async function saveOverride(id){
   const e=empById(id); const old=e.accessOverride; e.accessOverride=$('#ed-override').value; e.updatedAt=nowISO();
@@ -1356,7 +1391,7 @@ function mapEmpToDb(e,importId){ return {
   access_override:e.accessOverride||'AUTO', is_eligible:!!e.isEligible,
   eligibility_reason:e.eligibilityReason||null, missing_from_latest_import:!!e.missingFromLatestImport,
   last_import_id:null }; }
-function mapEmpFromDb(r){ return { employeeId:r.employee_id, fullName:r.full_name, department:r.department, position:r.position, gender:r.gender, sourceCategory:r.source_category, employmentStatus:r.employment_status, joiningDate:r.joining_date, contractType:r.contract_type, contractStart:r.contract_start, contractEnd:r.contract_end, accessOverride:r.access_override, isEligible:r.is_eligible, eligibilityReason:r.eligibility_reason, missingFromLatestImport:r.missing_from_latest_import, valid:true }; }
+function mapEmpFromDb(r){ return { employeeId:r.employee_id, fullName:r.full_name, department:r.department, position:r.position, gender:r.gender, sourceCategory:r.source_category, employmentStatus:r.employment_status, joiningDate:r.joining_date, contractType:r.contract_type, contractStart:r.contract_start, contractEnd:r.contract_end, accessOverride:r.access_override, isEligible:r.is_eligible, eligibilityReason:r.eligibility_reason, missingFromLatestImport:r.missing_from_latest_import, photo:r.photo||null, valid:true }; }
 function mapMealToDb(m){ return { employee_id:m.employeeId, meal_date:m.mealDate, meal_service_id:m.mealServiceId, scanned_at:m.scannedAt, scanner_user_id:m.scannerUserId, scanner_session_id:m.scannerSessionId, scan_method:m.scanMethod, eligibility_status_at_scan:m.eligibilityStatusAtScan, source_category_at_scan:m.sourceCategoryAtScan, unit_price_at_scan:m.unitPrice, status:m.status }; }
 function mapMealFromDb(r){ return { id:r.id, employeeId:r.employee_id, mealDate:r.meal_date, mealServiceId:r.meal_service_id, scannedAt:r.scanned_at, scannerUserId:r.scanner_user_id, scanMethod:r.scan_method, eligibilityStatusAtScan:r.eligibility_status_at_scan, sourceCategoryAtScan:r.source_category_at_scan, unitPrice:r.unit_price_at_scan, status:r.status, cancelReason:r.cancel_reason }; }
 let _mealChannel=null;

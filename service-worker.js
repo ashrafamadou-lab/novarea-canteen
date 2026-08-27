@@ -1,5 +1,5 @@
 // Novarea — Canteen Access & Meal Control — Service Worker (offline PWA)
-const CACHE_NAME = 'ntb-canteen-v25';
+const CACHE_NAME = 'ntb-canteen-v26';
 const APP_SHELL = [
   './',
   './index.html',

@@ -45,6 +45,7 @@ create table if not exists employees (
   access_override          text not null default 'AUTO' check (access_override in ('AUTO','ALLOWED','BLOCKED')),
   is_eligible              boolean not null default false,
   eligibility_reason       text,
+  photo                    text,               -- optional badge photo (data URI or URL)
   missing_from_latest_import boolean not null default false,
   last_import_id           bigint,
   created_at               timestamptz not null default now(),
