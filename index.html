@@ -908,11 +908,14 @@ function renderEmployees(){
   });
   const cats=['','Agent','ANPE','Staff','PSIE'];
   $('#s-employees').innerHTML=`
-   <div class="flex-between"><h2 style="margin:0;">Employees <span class="muted small">(${getEmployees().length})</span></h2></div>
+   <div class="flex-between"><h2 style="margin:0;">Employees <span class="muted small">(${getEmployees().length})</span></h2>
+     <label class="btn secondary small" style="cursor:pointer;margin:0;">📷 Import photos<input type="file" accept="image/*" multiple style="display:none" onchange="bulkImportPhotos(this.files)"></label>
+   </div>
    <div class="card"><div class="row">
      <input id="emp-q" placeholder="Search name / ID / department" value="${esc($('#emp-q')?.value||'')}" oninput="renderEmployees()" class="grow">
      <select id="emp-cat" onchange="renderEmployees()" style="width:auto;">${cats.map(c=>`<option value="${c}" ${c===catF?'selected':''}>${c||'All categories'}</option>`).join('')}</select>
-   </div></div>
+   </div>
+   <div id="bulk-photo-status" class="small muted" style="margin-top:6px;"></div></div>
    <div class="card"><div class="tablewrap"><table>
      <thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Dept</th><th>Status</th><th>Access</th><th>Eligible</th><th>Badge</th><th></th></tr></thead>
      <tbody>${list.map(e=>{const el=CC.computeEligibility(e);const b=activeBadgeOf(e.employeeId);return `<tr>
@@ -978,6 +981,41 @@ async function removePhoto(id){
   if(CLOUD){ const {error}=await SB.from('employees').update({photo:null}).eq('employee_id',id); if(error){ toast('❌ '+error.message); return; } }
   else saveLocal('employees');
   await audit('EMP_PHOTO','employee',id,null,{set:false}); toast('Photo retirée.'); empDetail(id);
+}
+async function bulkImportPhotos(files){
+  const list=[...files].filter(f=>/^image\//.test(f.type));
+  if(!list.length){ toast('Aucune image sélectionnée.'); return; }
+  const status=$('#bulk-photo-status');
+  let matched=0; const unmatched=[];
+  const norm=s=>(s||'').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,'');
+  for(let i=0;i<list.length;i++){
+    const f=list[i]; const base=f.name.replace(/\.[^.]+$/,'').trim();
+    // 1) exact Employee ID  2) filename contains an Employee ID  3) name match
+    let e=empById(base);
+    if(!e) e=state.employees.find(x=>base.replace(/[^0-9]/g,'')===String(x.employeeId));
+    if(!e) e=state.employees.find(x=>String(x.employeeId)&&base.includes(String(x.employeeId)));
+    if(!e){ const nb=norm(base); e=state.employees.find(x=>{const nn=norm(x.fullName);return nn&&(nn===nb||nb.includes(nn)||nn.includes(nb));}); }
+    if(!e){ unmatched.push(f.name); }
+    else{
+      try{
+        const uri=await resizeImage(f,256); e.photo=uri;
+        if(CLOUD){ const {error}=await SB.from('employees').update({photo:uri}).eq('employee_id',e.employeeId); if(error){ unmatched.push(f.name+' (cloud: '+error.message+')'); e.photo=null; } else matched++; }
+        else matched++;
+      }catch(err){ unmatched.push(f.name+' (image illisible)'); }
+    }
+    if(status) status.textContent=`Traitement ${i+1}/${list.length} … ${matched} associées`;
+  }
+  if(!CLOUD) saveLocal('employees');
+  await audit('EMP_PHOTO_BULK','employee','*',null,{matched,total:list.length});
+  if(status) status.textContent='';
+  toast('✅ '+matched+' photos importées'+(unmatched.length?(' · '+unmatched.length+' non associées'):''));
+  renderEmployees();
+  if(unmatched.length){
+    openModal(`<h3>Photos non associées (${unmatched.length})</h3>
+      <p class="small muted">Pour être associée automatiquement, chaque photo doit être nommée avec le <b>matricule</b> de l'employé (ex. <code>260177.jpg</code>). Renomme ces fichiers puis réessaie :</p>
+      <div class="tablewrap" style="max-height:50vh;"><ul style="margin:0;padding-left:18px;">${unmatched.map(u=>`<li class="small">${esc(u)}</li>`).join('')}</ul></div>
+      <div class="row" style="justify-content:flex-end;margin-top:12px;"><button onclick="closeModal()">OK</button></div>`,'wide');
+  }
 }
 async function saveOverride(id){
   const e=empById(id); const old=e.accessOverride; e.accessOverride=$('#ed-override').value; e.updatedAt=nowISO();
