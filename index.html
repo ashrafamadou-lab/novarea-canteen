@@ -164,17 +164,29 @@ th{color:var(--ink-2);font-size:.78rem;text-transform:uppercase;letter-spacing:.
 .scan-result.idle{background:rgba(255,255,255,.6);color:var(--muted);}
 .conn-dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
 .conn-online{background:#22a35a;} .conn-offline{background:#c0392b;} .conn-local{background:#b7791f;}
-/* ---------- Badge print ---------- */
-.badge-card{width:320px;border:1px solid #cfe0d3;border-radius:14px;padding:14px;background:#fff;color:#123;display:flex;gap:12px;align-items:center;}
-.badge-card .qr{flex-shrink:0;}
-.badge-card h4{margin:0 0 2px;color:var(--green-dark);}
-.badge-card .cap{margin-top:6px;font-size:.7rem;font-weight:800;color:#fff;background:var(--green);padding:2px 8px;border-radius:6px;display:inline-block;}
-/* off-screen holder for printable badges (moved on-page only in @media print) */
+/* ---------- Badge print (portrait ID card) ---------- */
 #print-area{position:fixed;left:-9999px;top:0;}
+.id-card{width:300px;background:#fff;color:#1c2a20;border:1px solid #d3e2d7;border-radius:16px;overflow:hidden;display:inline-flex;flex-direction:column;vertical-align:top;font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;box-shadow:0 2px 10px rgba(0,0,0,.08);}
+.id-card .hd{background:linear-gradient(135deg,#2f8f3e,#1f6b2b);color:#fff;padding:11px 14px;display:flex;align-items:center;gap:9px;}
+.id-card .hd img{height:26px;width:auto;}
+.id-card .hd .co{font-size:.62rem;font-weight:800;letter-spacing:.08em;line-height:1.25;}
+.id-card .photo{width:92px;height:92px;border-radius:50%;margin:16px auto 8px;background:#eaf5ec;display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:800;color:#1f6b2b;border:3px solid #2f8f3e;object-fit:cover;overflow:hidden;}
+.id-card .photo img{width:100%;height:100%;object-fit:cover;}
+.id-card .nm{text-align:center;font-size:1.08rem;font-weight:800;color:#1f6b2b;padding:0 10px;line-height:1.15;}
+.id-card .pos{text-align:center;font-size:.78rem;color:#5a6b60;margin:2px 0 10px;}
+.id-card .rows{padding:0 16px;font-size:.72rem;}
+.id-card .rows .r{display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px dashed #e2ebe4;}
+.id-card .rows .r .k{color:#8a9a90;font-weight:600;} .id-card .rows .r .v{font-weight:700;color:#1c2a20;text-align:right;}
+.id-card .qrwrap{display:flex;justify-content:center;padding:12px 0 6px;}
+.id-card .qrref{text-align:center;font-size:.58rem;color:#9aa89f;letter-spacing:.04em;margin-top:-2px;}
+.id-card .cap{display:block;text-align:center;background:#2f8f3e;color:#fff;font-weight:800;font-size:.72rem;letter-spacing:.1em;padding:6px;margin-top:8px;}
+.id-card .sig{padding:9px 16px 12px;text-align:center;}
+.id-card .sig .line{border-top:1px solid #b9c9bf;margin:0 auto 3px;width:70%;}
+.id-card .sig .lbl{font-size:.6rem;color:#8a9a90;letter-spacing:.03em;}
 @media print{
   body *{visibility:hidden;} #print-area,#print-area *{visibility:visible;}
   #print-area{position:absolute!important;left:0!important;top:0!important;width:100%;}
-  #print-area .badge-card{page-break-inside:avoid;margin:8px;display:flex!important;}
+  #print-area .id-card{page-break-inside:avoid;margin:8px;display:inline-flex!important;}
   body::before,body::after{display:none;}
 }
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:12px;box-shadow:var(--shadow);z-index:200;opacity:0;transition:.2s;font-size:.9rem;}
@@ -984,17 +996,27 @@ async function generateMissingBadges(){
 }
 function printBadges(ids){
   const area=$('#print-area'); area.innerHTML='';
+  const dmy=iso=>{ if(!iso||!/^\d{4}-\d{2}-\d{2}/.test(iso))return '—'; const p=iso.slice(0,10).split('-'); return p[2]+'-'+p[1]+'-'+p[0]; };
   ids.forEach(id=>{
     const e=empById(id); const b=activeBadgeOf(id); if(!e||!b)return;
-    const wrap=document.createElement('div'); wrap.className='badge-card';
-    const qr=document.createElement('div'); qr.className='qr';
-    wrap.innerHTML=`<div class="info"><h4>${esc(e.fullName)}</h4>
-      <div class="small">ID: <b>${esc(e.employeeId)}</b></div>
-      <div class="small">${esc(e.department||'')}</div>
-      <span class="cap">CANTEEN ACCESS</span></div>`;
-    wrap.prepend(qr);
-    area.appendChild(wrap);
-    new QRCode(qr,{text:b.token,width:96,height:96,correctLevel:QRCode.CorrectLevel.M});
+    const initials=((e.fullName||'?').trim().split(/\s+/).filter(Boolean).slice(0,2).map(s=>s[0]).join('')||'?').toUpperCase();
+    const card=document.createElement('div'); card.className='id-card';
+    card.innerHTML=`
+      <div class="hd"><img src="assets/logo-novarea-white.png" alt="Novarea"><div class="co">NOVAREA<br>TEXTILES BENIN</div></div>
+      <div class="photo">${e.photo?`<img src="${esc(e.photo)}" alt="">`:esc(initials)}</div>
+      <div class="nm">${esc(e.fullName)}</div>
+      <div class="pos">${esc(e.position||'')}</div>
+      <div class="rows">
+        <div class="r"><span class="k">ID</span><span class="v">${esc(e.employeeId)}</span></div>
+        <div class="r"><span class="k">Department</span><span class="v">${esc(e.department||'—')}</span></div>
+        <div class="r"><span class="k">Date of join</span><span class="v">${dmy(e.joiningDate)}</span></div>
+      </div>
+      <div class="qrwrap"><div class="qr"></div></div>
+      <div class="qrref">${esc(b.displayTokenReference||'')}</div>
+      <div class="cap">CANTEEN ACCESS</div>
+      <div class="sig"><div class="line"></div><div class="lbl">Authorised Signatory</div></div>`;
+    area.appendChild(card);
+    new QRCode(card.querySelector('.qr'),{text:b.token,width:104,height:104,correctLevel:QRCode.CorrectLevel.M});
   });
   if(!area.children.length){ toast('No printable badge.'); return; }
   setTimeout(()=>{ window.print(); audit('BADGE_PRINT','badge',ids.join(','),null,{count:ids.length}); },300);
