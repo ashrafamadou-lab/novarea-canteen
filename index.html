@@ -387,7 +387,7 @@ const I18N = { fr: {
   // scanner
   '▶ Start camera':'▶ Démarrer la caméra','⏸ Stop':'⏸ Arrêter','⌨ Manual ID':'⌨ Matricule manuel',
   'Point the camera at a badge QR code.':'Pointez la caméra vers le QR code du badge.',
-  'Service:':'Service :','Served this session:':'Servis cette session :','Camera unavailable':'Caméra indisponible',
+  'Service:':'Service :','Served this session:':'Servis cette session :','Served today:':"Servis aujourd'hui :",'Camera unavailable':'Caméra indisponible',
   'Use the Manual ID button.':'Utilisez le bouton Matricule manuel.','Manual Employee ID':'Matricule manuel',
   'Look up & confirm':'Rechercher & confirmer','No employee with that ID.':'Aucun employé avec ce matricule.',
   'MEAL AUTHORIZED':'REPAS AUTORISÉ','MEAL ALREADY RECORDED':'REPAS DÉJÀ ENREGISTRÉ',
@@ -743,6 +743,7 @@ function recomputeEligibility(e){ const el=CC.computeEligibility(e); e.isEligibl
    SCANNER
    =================================================================== */
 let html5Qr=null, scanRunning=false, lastToken=null, lastAt=0, sessionCount=0;
+function scanTodayCount(){ const t=todayISO(); return getMeals().filter(m=>m.mealDate===t && m.status!=='CANCELLED').length; }
 function renderScanner(){
   const svc=activeService();
   $('#s-scanner').innerHTML=`
@@ -751,7 +752,7 @@ function renderScanner(){
      <div class="row">
        <span class="pill"><span class="conn-dot" id="scan-conn"></span><span id="scan-conn-t"></span></span>
        <span class="pill">Service: <b>&nbsp;${esc(svc.label)}</b></span>
-       <span class="pill">Served this session: <b id="scan-count">&nbsp;${sessionCount}</b></span>
+       <span class="pill">Served today: <b id="scan-count">&nbsp;${scanTodayCount()}</b></span>
      </div>
    </div>
    <div class="card solid" style="max-width:520px;margin:14px auto;">
@@ -827,7 +828,7 @@ async function validateAndRecord(employeeId, method){
     }
   } else { state.meals.push(rec); saveLocal('meals'); saved=true; }
   if(saved){
-    sessionCount++; $('#scan-count')&&($('#scan-count').textContent=' '+sessionCount);
+    sessionCount++; $('#scan-count')&&($('#scan-count').textContent=' '+scanTodayCount());
     showScanResult('ok','MEAL AUTHORIZED', name, 'Time: '+new Date().toLocaleTimeString('fr-FR'));
     beep(true); vibrate();
     await audit('MEAL_SERVED','meal',rec.id,null,{employeeId,method,price});
