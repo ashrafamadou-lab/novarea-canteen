@@ -150,15 +150,19 @@ th{color:var(--ink-2);font-size:.78rem;text-transform:uppercase;letter-spacing:.
 #login .brand{align-items:center;text-align:center;gap:10px;padding-bottom:4px;}
 #login .brand img{height:64px;}
 #login .brand-sub{font-size:.82rem;letter-spacing:.18em;}
-.login-theme{position:absolute;top:14px;right:14px;width:38px;height:38px;padding:0;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(255,255,255,.6);border:1px solid var(--border-2);color:var(--ink-2);font-size:1.1rem;line-height:1;cursor:pointer;box-shadow:none;}
-:root[data-theme="dark"] .login-theme{background:rgba(255,255,255,.08);color:var(--ink);}
 .pass-wrap{position:relative;display:flex;align-items:center;}
 .pass-wrap input{flex:1;padding-right:44px;}
-.pass-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:34px;height:34px;padding:0;display:flex;align-items:center;justify-content:center;background:transparent;border:none;box-shadow:none;color:var(--muted);font-size:1.05rem;cursor:pointer;}
+.pass-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:34px;height:34px;padding:0;display:flex;align-items:center;justify-content:center;background:transparent;border:none;box-shadow:none;color:var(--muted);cursor:pointer;}
 .pass-eye:hover{color:var(--ink-2);}
+.pass-eye svg{width:19px;height:19px;}
 .link-btn{color:var(--green-dark);font-size:.8rem;font-weight:600;cursor:pointer;text-decoration:none;}
 .link-btn:hover{text-decoration:underline;}
 :root[data-theme="dark"] .link-btn{color:var(--green);}
+.login-foot{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:16px;}
+.theme-mini{width:34px;height:34px;padding:0;display:flex;align-items:center;justify-content:center;border-radius:999px;background:rgba(255,255,255,.6);border:1px solid var(--border-2);color:var(--ink-2);cursor:pointer;box-shadow:none;}
+.theme-mini:hover{color:var(--ink);}
+.theme-mini svg{width:17px;height:17px;}
+:root[data-theme="dark"] .theme-mini{background:rgba(255,255,255,.08);color:var(--ink);}
 /* ---------- Modal ---------- */
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(20,35,25,.45);backdrop-filter:blur(3px);z-index:100;align-items:center;justify-content:center;padding:16px;}
 .modal-bg.on{display:flex;}
@@ -229,7 +233,6 @@ th{color:var(--ink-2);font-size:.78rem;text-transform:uppercase;letter-spacing:.
 <!-- ============================= LOGIN ============================= -->
 <div id="login" style="display:none;">
   <div class="box glass">
-    <button type="button" class="login-theme" id="login-theme" onclick="toggleThemeQuick()" title="Dark / Light" aria-label="Dark / Light">🌙</button>
     <div class="brand">
       <img class="brand-logo" src="assets/logo-novarea.png" alt="Novarea">
       <div class="brand-sub">Canteen Access</div>
@@ -240,17 +243,18 @@ th{color:var(--ink-2);font-size:.78rem;text-transform:uppercase;letter-spacing:.
     <label>Password</label>
     <div class="pass-wrap">
       <input id="li-pass" type="password" autocomplete="current-password" placeholder="••••••••">
-      <button type="button" class="pass-eye" id="li-eye" onclick="togglePass()" title="Show / hide password" aria-label="Show / hide password">👁</button>
+      <button type="button" class="pass-eye" id="li-eye" onclick="togglePass()" title="Show / hide password" aria-label="Show / hide password"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></button>
     </div>
     <div style="text-align:right;margin-top:6px;">
       <span class="link-btn" id="li-forgot" onclick="forgotPassword()">Forgot password?</span>
     </div>
     <button style="width:100%;margin-top:16px;" onclick="doLogin()">Sign in</button>
-    <div style="text-align:center;margin-top:16px;">
+    <div class="login-foot">
       <span class="lang-toggle">
         <button class="lang-btn" data-lang="fr" onclick="setLang('fr')">FR</button>
         <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
       </span>
+      <button type="button" class="theme-mini" id="login-theme" onclick="toggleThemeQuick()" title="Dark / Light" aria-label="Dark / Light"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
     </div>
     <p class="small muted" id="login-mode" style="margin-top:14px;text-align:center;"></p>
   </div>
@@ -499,6 +503,11 @@ function stepScale(d){
   applyScale();
 }
 
+/* ---------- Login control icons (SVG) ---------- */
+const SVG_EYE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+const SVG_EYE_OFF='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+const SVG_SUN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
+const SVG_MOON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
 /* ---------- Theme (light / dark / auto) ---------- */
 let THEME = localStorage.getItem('ntbc_theme')||'auto';
 function effectiveTheme(){
@@ -511,7 +520,7 @@ function applyTheme(){
   const meta=document.querySelector('meta[name="theme-color"]'); if(meta) meta.setAttribute('content', eff==='dark'?'#0c150f':'#1f6b2b');
   $$('.brand-logo').forEach(img=>{ img.src = eff==='dark' ? 'assets/logo-novarea-white.png' : 'assets/logo-novarea.png'; });
   $$('.lang-btn[data-theme]').forEach(b=>b.classList.toggle('on', b.dataset.theme===THEME));
-  const lt=$('#login-theme'); if(lt) lt.textContent = eff==='dark' ? '☀️' : '🌙';
+  const lt=$('#login-theme'); if(lt) lt.innerHTML = eff==='dark' ? SVG_SUN : SVG_MOON;
 }
 function setTheme(t){ THEME=t; localStorage.setItem('ntbc_theme',t); applyTheme(); }
 function toggleThemeQuick(){ setTheme(effectiveTheme()==='dark'?'light':'dark'); }
@@ -664,7 +673,7 @@ function issueBadgeLocal(employeeId){
    AUTH
    =================================================================== */
 function loginMsg(text, ok){ const el=$('#login-msg'); if(!el)return; el.textContent=text||''; el.style.color = ok ? 'var(--green-dark)' : 'var(--danger)'; }
-function togglePass(){ const i=$('#li-pass'), b=$('#li-eye'); if(!i)return; const show=i.type==='password'; i.type=show?'text':'password'; if(b) b.textContent=show?'🙈':'👁'; i.focus(); }
+function togglePass(){ const i=$('#li-pass'), b=$('#li-eye'); if(!i)return; const show=i.type==='password'; i.type=show?'text':'password'; if(b) b.innerHTML=show?SVG_EYE_OFF:SVG_EYE; i.focus(); }
 async function forgotPassword(){
   const email=($('#li-user').value||'').trim();
   if(!CLOUD){ loginMsg('Password reset is available in cloud mode only.'); return; }
