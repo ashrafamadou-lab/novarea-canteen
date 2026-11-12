@@ -146,10 +146,19 @@ th{color:var(--ink-2);font-size:.78rem;text-transform:uppercase;letter-spacing:.
 }
 /* ---------- Login ---------- */
 #login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
-#login .box{width:min(400px,100%);padding:28px;}
+#login .box{width:min(400px,100%);padding:28px;position:relative;}
 #login .brand{align-items:center;text-align:center;gap:10px;padding-bottom:4px;}
 #login .brand img{height:64px;}
 #login .brand-sub{font-size:.82rem;letter-spacing:.18em;}
+.login-theme{position:absolute;top:14px;right:14px;width:38px;height:38px;padding:0;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(255,255,255,.6);border:1px solid var(--border-2);color:var(--ink-2);font-size:1.1rem;line-height:1;cursor:pointer;box-shadow:none;}
+:root[data-theme="dark"] .login-theme{background:rgba(255,255,255,.08);color:var(--ink);}
+.pass-wrap{position:relative;display:flex;align-items:center;}
+.pass-wrap input{flex:1;padding-right:44px;}
+.pass-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:34px;height:34px;padding:0;display:flex;align-items:center;justify-content:center;background:transparent;border:none;box-shadow:none;color:var(--muted);font-size:1.05rem;cursor:pointer;}
+.pass-eye:hover{color:var(--ink-2);}
+.link-btn{color:var(--green-dark);font-size:.8rem;font-weight:600;cursor:pointer;text-decoration:none;}
+.link-btn:hover{text-decoration:underline;}
+:root[data-theme="dark"] .link-btn{color:var(--green);}
 /* ---------- Modal ---------- */
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(20,35,25,.45);backdrop-filter:blur(3px);z-index:100;align-items:center;justify-content:center;padding:16px;}
 .modal-bg.on{display:flex;}
@@ -220,15 +229,22 @@ th{color:var(--ink-2);font-size:.78rem;text-transform:uppercase;letter-spacing:.
 <!-- ============================= LOGIN ============================= -->
 <div id="login" style="display:none;">
   <div class="box glass">
+    <button type="button" class="login-theme" id="login-theme" onclick="toggleThemeQuick()" title="Dark / Light" aria-label="Dark / Light">🌙</button>
     <div class="brand">
       <img class="brand-logo" src="assets/logo-novarea.png" alt="Novarea">
       <div class="brand-sub">Canteen Access</div>
     </div>
-    <div id="login-msg" class="small" style="color:var(--danger);min-height:18px;"></div>
+    <div id="login-msg" class="small" style="min-height:18px;"></div>
     <label>Username</label>
     <input id="li-user" autocomplete="username" placeholder="e.g. admin">
     <label>Password</label>
-    <input id="li-pass" type="password" autocomplete="current-password" placeholder="••••••••">
+    <div class="pass-wrap">
+      <input id="li-pass" type="password" autocomplete="current-password" placeholder="••••••••">
+      <button type="button" class="pass-eye" id="li-eye" onclick="togglePass()" title="Show / hide password" aria-label="Show / hide password">👁</button>
+    </div>
+    <div style="text-align:right;margin-top:6px;">
+      <span class="link-btn" id="li-forgot" onclick="forgotPassword()">Forgot password?</span>
+    </div>
     <button style="width:100%;margin-top:16px;" onclick="doLogin()">Sign in</button>
     <div style="text-align:center;margin-top:16px;">
       <span class="lang-toggle">
@@ -309,6 +325,10 @@ const I18N = { fr: {
   // shell / login
   'Canteen Access & Meal Control':'Accès Cantine & Contrôle des Repas','Canteen Access':'Accès Cantine',
   'Username':"Nom d'utilisateur",'Password':'Mot de passe','Sign in':'Se connecter',
+  'Forgot password?':'Mot de passe oublié ?',
+  'Enter your email in the Username field first.':"Saisissez d'abord votre e-mail dans le champ Nom d'utilisateur.",
+  'Reset email sent — check your inbox (and spam).':'E-mail de réinitialisation envoyé — vérifiez votre boîte (et les spams).',
+  'Password reset is available in cloud mode only.':"La réinitialisation n'est disponible qu'en mode cloud.",
   'Local mode — data stays in this browser. Demo: admin / admin123':'Mode local — les données restent dans ce navigateur. Démo : admin / admin123',
   'Cloud mode (multi-device, server-enforced).':'Mode cloud (multi-postes, contrôlé par le serveur).',
   '⬇ Install app':"⬇ Installer l'app",'⎋ Sign out':'⎋ Se déconnecter','☰':'☰',
@@ -491,8 +511,10 @@ function applyTheme(){
   const meta=document.querySelector('meta[name="theme-color"]'); if(meta) meta.setAttribute('content', eff==='dark'?'#0c150f':'#1f6b2b');
   $$('.brand-logo').forEach(img=>{ img.src = eff==='dark' ? 'assets/logo-novarea-white.png' : 'assets/logo-novarea.png'; });
   $$('.lang-btn[data-theme]').forEach(b=>b.classList.toggle('on', b.dataset.theme===THEME));
+  const lt=$('#login-theme'); if(lt) lt.textContent = eff==='dark' ? '☀️' : '🌙';
 }
 function setTheme(t){ THEME=t; localStorage.setItem('ntbc_theme',t); applyTheme(); }
+function toggleThemeQuick(){ setTheme(effectiveTheme()==='dark'?'light':'dark'); }
 if(window.matchMedia){ try{ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{ if(THEME==='auto') applyTheme(); }); }catch(e){} }
 
 /* ---------- local persistence ---------- */
@@ -641,9 +663,21 @@ function issueBadgeLocal(employeeId){
 /* ===================================================================
    AUTH
    =================================================================== */
+function loginMsg(text, ok){ const el=$('#login-msg'); if(!el)return; el.textContent=text||''; el.style.color = ok ? 'var(--green-dark)' : 'var(--danger)'; }
+function togglePass(){ const i=$('#li-pass'), b=$('#li-eye'); if(!i)return; const show=i.type==='password'; i.type=show?'text':'password'; if(b) b.textContent=show?'🙈':'👁'; i.focus(); }
+async function forgotPassword(){
+  const email=($('#li-user').value||'').trim();
+  if(!CLOUD){ loginMsg('Password reset is available in cloud mode only.'); return; }
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ loginMsg('Enter your email in the Username field first.'); return; }
+  try{
+    const {error}=await SB.auth.resetPasswordForEmail(email,{redirectTo:location.origin});
+    if(error) throw error;
+    loginMsg('Reset email sent — check your inbox (and spam).', true);
+  }catch(e){ loginMsg('Could not send reset email: '+(e.message||e)); }
+}
 async function doLogin(){
   const u=$('#li-user').value.trim(), p=$('#li-pass').value;
-  $('#login-msg').textContent='';
+  loginMsg('');
   if(CLOUD){
     try{
       const {data,error}=await SB.auth.signInWithPassword({email:u,password:p});
@@ -653,13 +687,13 @@ async function doLogin(){
       localStorage.setItem('ntbc_session',JSON.stringify({userId:SESSION.userId,name:SESSION.name,role:SESSION.role}));
       await audit('LOGIN','session',SESSION.userId);
       enterApp();
-    }catch(e){ $('#login-msg').textContent='Sign-in failed: '+(e.message||e); }
+    }catch(e){ loginMsg('Sign-in failed: '+(e.message||e)); }
     return;
   }
   const user=state.users.find(x=>x.username.toLowerCase()===u.toLowerCase());
-  if(!user){ $('#login-msg').textContent='Unknown user.'; return; }
+  if(!user){ loginMsg('Unknown user.'); return; }
   const h=await sha256(p+'::ntbc');
-  if(h!==user.passHash){ $('#login-msg').textContent='Wrong password.'; return; }
+  if(h!==user.passHash){ loginMsg('Wrong password.'); return; }
   SESSION={ userId:user.id, name:user.name, role:user.role, sessionId:uid() };
   localStorage.setItem('ntbc_session',JSON.stringify(SESSION));
   await audit('LOGIN','session',user.id);
