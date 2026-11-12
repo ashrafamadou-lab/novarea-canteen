@@ -394,7 +394,7 @@ const I18N = { fr: {
   'Use the Manual ID button.':'Utilisez le bouton Matricule manuel.','Manual Employee ID':'Matricule manuel',
   'Look up & confirm':'Rechercher & confirmer','No employee with that ID.':'Aucun employé avec ce matricule.',
   'MEAL AUTHORIZED':'REPAS AUTORISÉ','MEAL ALREADY RECORDED':'REPAS DÉJÀ ENREGISTRÉ',
-  'ACCESS NOT AUTHORIZED':'ACCÈS NON AUTORISÉ','INVALID OR REVOKED BADGE':'BADGE INVALIDE OU RÉVOQUÉ',
+  'ACCESS NOT AUTHORIZED':'ACCÈS NON AUTORISÉ','INVALID OR REVOKED BADGE':'BADGE INVALIDE OU RÉVOQUÉ','BADGE NOT RECOGNIZED':'BADGE NON RECONNU',
   'EMPLOYEE NOT FOUND':'EMPLOYÉ INTROUVABLE','Scanner library still loading…':'Bibliothèque scanner en cours de chargement…',
   'Camera unavailable — use Manual ID.':'Caméra indisponible — utilisez le Matricule manuel.',
   // eligibility reasons
@@ -794,11 +794,15 @@ function onScan(text){
   processToken(text,'QR');
 }
 async function processToken(token,method){
-  // brief pause during validation
-  const b=badgeByToken(token);
-  if(!b){ showScanResult('no','INVALID OR REVOKED BADGE',''); beep(false); return; }
-  if(b.status!=='ACTIVE'){ showScanResult('no','INVALID OR REVOKED BADGE',''); beep(false); return; }
-  await validateAndRecord(b.employeeId, method||'QR');
+  const text=String(token||'').trim();
+  // Badge QR codes encode the Employee ID (matricule) directly — resolve it.
+  let e=empById(text);
+  if(!e){ const m=text.match(/(\d{4,})/); if(m) e=empById(m[1]); } // tolerate "Employee ID: 260195" etc.
+  if(e){ await validateAndRecord(e.employeeId, method||'QR'); return; }
+  // Legacy fallback: opaque badge token (NTB-CAN-…) from older printed badges.
+  const b=badgeByToken(text);
+  if(b && b.status==='ACTIVE'){ await validateAndRecord(b.employeeId, method||'QR'); return; }
+  showScanResult('no', b?'INVALID OR REVOKED BADGE':'BADGE NOT RECOGNIZED', b?'':esc(text.slice(0,24))); beep(false);
 }
 async function validateAndRecord(employeeId, method){
   const e=empById(employeeId);
@@ -1110,11 +1114,11 @@ function printBadges(ids){
         <div class="r"><span class="k">Date of join</span><span class="v">${dmy(e.joiningDate)}</span></div>
       </div>
       <div class="qrwrap"><div class="qr"></div></div>
-      <div class="qrref">${esc(b.displayTokenReference||'')}</div>
+      <div class="qrref">${esc(e.employeeId)}</div>
       <div class="cap">CANTEEN ACCESS</div>
       <div class="sig"><div class="line"></div><div class="lbl">Authorised Signatory</div></div>`;
     area.appendChild(card);
-    new QRCode(card.querySelector('.qr'),{text:b.token,width:104,height:104,correctLevel:QRCode.CorrectLevel.M});
+    new QRCode(card.querySelector('.qr'),{text:String(e.employeeId),width:104,height:104,correctLevel:QRCode.CorrectLevel.M});
   });
   if(!area.children.length){ toast('No printable badge.'); return; }
   setTimeout(()=>{ window.print(); audit('BADGE_PRINT','badge',ids.join(','),null,{count:ids.length}); },300);
